@@ -1,7 +1,12 @@
 patient_raw_data/
 patient_labeled_data/
+process_labeled_data/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 *.o
 efr32_firmware/efr32_sim
+cache/
+*/cache/
+*.npz
+
