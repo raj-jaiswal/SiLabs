@@ -1,5 +1,4 @@
-// Direct C Decision Tree (600s Window, 95 Features, STRIDE=5s) for Silicon Labs EFR32
-// RAM Usage: 0 KB | Flash Footprint: < 3 KB
+// Combined Direct C Decision Trees (95 Features, W=600s, STRIDE=5s)
 #include <stdbool.h>
 
 static inline bool predict_hypotension_95(const float* features) {
