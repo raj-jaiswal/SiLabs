@@ -66,29 +66,29 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-[#0B0F17]/70 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs transition-opacity"
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-[#131926] border-l border-[#1E2638] shadow-2xl flex flex-col font-sans select-none">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white border-l border-slate-200 shadow-2xl flex flex-col font-sans select-none">
         
         {/* Header */}
-        <div className="p-5 border-b border-[#1E2638] flex items-center justify-between bg-[#0B0F17]">
+        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-rose-500/10 rounded-lg border border-rose-500/20 text-rose-400">
+            <div className="p-2 bg-red-50 rounded-lg border border-red-200 text-red-700">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider font-mono">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider font-mono">
                 Admin Dispatch Console
               </h2>
-              <p className="text-xs text-slate-400">User account directory &amp; patient assignment portal</p>
+              <p className="text-xs text-slate-600">User account directory &amp; patient assignment portal</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-[#1E2638] bg-[#131926] text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:text-slate-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,37 +98,37 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
         <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs">
           
           {/* 1. Active User Session Monitor */}
-          <div className="bg-[#0B0F17] border border-[#1E2638] rounded-xl p-4 space-y-2">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-300 uppercase tracking-wider font-mono">Active Admin Session</span>
-              <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px]">
+              <span className="font-semibold text-slate-700 uppercase tracking-wider font-mono">Active Admin Session</span>
+              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 font-mono text-[10px] font-bold">
                 AUTHENTICATED
               </span>
             </div>
-            <div className="text-sm font-bold text-slate-100">{currentUser.name}</div>
-            <div className="text-xs text-slate-400 font-mono">{currentUser.email}</div>
+            <div className="text-sm font-bold text-slate-900">{currentUser.name}</div>
+            <div className="text-xs text-slate-600 font-mono">{currentUser.email}</div>
           </div>
 
           {/* 2. Dispatch User to Patient */}
-          <div className="bg-[#0B0F17] border border-[#1E2638] rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center">
-              <Send className="w-4 h-4 mr-2 text-sky-400" /> Dispatch Staff to Urgent Patient
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+            <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center">
+              <Send className="w-4 h-4 mr-2 text-slate-700" /> Dispatch Staff to Urgent Patient
             </h3>
 
             {dispatchSuccess && (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg text-center font-medium">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-center font-semibold">
                 {dispatchSuccess}
               </div>
             )}
 
             <form onSubmit={handleDispatchSubmit} className="space-y-3">
               <div>
-                <label className="block text-slate-400 mb-1">Select Staff Member</label>
+                <label className="block text-slate-700 font-medium mb-1">Select Staff Member</label>
                 <select
                   required
                   value={targetUserId}
                   onChange={e => setTargetUserId(e.target.value)}
-                  className="w-full bg-[#131926] border border-[#1E2638] rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900"
                 >
                   <option value="">Choose User...</option>
                   {staffUsers.map(u => (
@@ -140,12 +140,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Select Target Patient</label>
+                <label className="block text-slate-700 font-medium mb-1">Select Target Patient</label>
                 <select
                   required
                   value={targetPatientId}
                   onChange={e => setTargetPatientId(e.target.value)}
-                  className="w-full bg-[#131926] border border-[#1E2638] rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900 font-mono"
                 >
                   <option value="">Choose Patient...</option>
                   {patients.map(p => (
@@ -157,19 +157,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Clinical Instruction Note</label>
+                <label className="block text-slate-700 font-medium mb-1">Clinical Instruction Note</label>
                 <input
                   type="text"
                   value={dispatchNote}
                   onChange={e => setDispatchNote(e.target.value)}
                   placeholder="e.g. Immediate bedside evaluation required for Hypotension alert"
-                  className="w-full bg-[#131926] border border-[#1E2638] rounded-lg px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Send Immediate Dispatch Alert</span>
@@ -178,20 +178,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
           </div>
 
           {/* 3. Add New Staff Account */}
-          <div className="bg-[#0B0F17] border border-[#1E2638] rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center">
-              <UserPlus className="w-4 h-4 mr-2 text-sky-400" /> Create New Staff User Account
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+            <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center">
+              <UserPlus className="w-4 h-4 mr-2 text-slate-700" /> Create New Staff User Account
             </h3>
 
             {userSuccess && (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-lg text-center font-medium">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-center font-semibold">
                 {userSuccess}
               </div>
             )}
 
             <form onSubmit={handleAddUserSubmit} className="space-y-3">
               <div>
-                <label className="block text-slate-400 mb-1">Staff Name</label>
+                <label className="block text-slate-700 font-medium mb-1">Staff Name</label>
                 <div className="relative">
                   <User className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -200,13 +200,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     placeholder="e.g. Nurse Sarah Jenkins"
-                    className="w-full bg-[#131926] border border-[#1E2638] rounded-lg pl-8 pr-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Email Address</label>
+                <label className="block text-slate-700 font-medium mb-1">Email Address</label>
                 <div className="relative">
                   <Mail className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -215,13 +215,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newEmail}
                     onChange={e => setNewEmail(e.target.value)}
                     placeholder="e.g. user4@hospital.com"
-                    className="w-full bg-[#131926] border border-[#1E2638] rounded-lg pl-8 pr-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-mono"
+                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Assign Password</label>
+                <label className="block text-slate-700 font-medium mb-1">Assign Password</label>
                 <div className="relative">
                   <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -230,51 +230,51 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="Enter password"
-                    className="w-full bg-[#131926] border border-[#1E2638] rounded-lg pl-8 pr-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-[#1C2537] hover:bg-[#253047] border border-[#2A354D] text-slate-200 font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
               >
-                <UserPlus className="w-3.5 h-3.5 text-sky-400" />
+                <UserPlus className="w-3.5 h-3.5 text-slate-700" />
                 <span>Register Staff Account</span>
               </button>
             </form>
           </div>
 
-          {/* 4. Registered User Accounts Directory (Masked Security Passwords) */}
-          <div className="bg-[#0B0F17] border border-[#1E2638] rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-200 uppercase tracking-wider font-mono">
+          {/* 4. Registered User Accounts Directory */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+            <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono">
               Registered Accounts Directory
             </h3>
-            <div className="divide-y divide-[#1E2638]">
+            <div className="divide-y divide-slate-200">
               {users.map(u => {
                 const isShowing = !!showPasswords[u.id];
                 return (
                   <div key={u.id} className="py-2.5 flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-slate-200">{u.name}</span>
+                        <span className="font-semibold text-slate-900">{u.name}</span>
                         <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase ${
-                          u.role === 'ADMIN' ? 'bg-rose-500/10 text-rose-300 border border-rose-500/20' : 'bg-sky-500/10 text-sky-300 border border-sky-500/20'
+                          u.role === 'ADMIN' ? 'bg-red-50 text-red-700 border border-red-300' : 'bg-slate-200 text-slate-800 border border-slate-300'
                         }`}>
                           {u.role}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">{u.email}</div>
+                      <div className="text-[11px] text-slate-600 font-mono">{u.email}</div>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-[#131926] rounded font-mono text-[11px] text-slate-300 border border-[#1E2638] tabular-nums">
+                      <span className="px-2 py-1 bg-white rounded font-mono text-[11px] text-slate-900 border border-slate-300 tabular-nums">
                         {isShowing ? u.password : '••••••••'}
                       </span>
                       <button
                         onClick={() => toggleShowPassword(u.id)}
                         title={isShowing ? "Hide Password" : "Show Password"}
-                        className="p-1 bg-[#131926] hover:bg-[#1C2537] text-slate-400 hover:text-slate-200 border border-[#1E2638] rounded transition-colors"
+                        className="p-1 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-300 rounded transition-colors"
                       >
                         {isShowing ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>

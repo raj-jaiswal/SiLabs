@@ -124,37 +124,37 @@ export default function AdminPage() {
   // Gated Auth: If not logged in as Admin, prompt for Admin password
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-md bg-[#131926] border border-[#1E2638] rounded-xl p-8 shadow-xl space-y-6">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-slate-900 font-sans">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-6">
           
           <div className="text-center space-y-2 select-none">
-            <div className="inline-flex p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 text-rose-400 mb-1">
+            <div className="inline-flex p-3 bg-red-50 rounded-xl border border-red-200 text-red-700 mb-1">
               <Shield className="w-6 h-6" />
             </div>
-            <h1 className="text-lg font-bold tracking-tight uppercase text-slate-100">Administrator Login</h1>
-            <p className="text-xs text-slate-400">Enter Admin password to access `/admin` control panel</p>
+            <h1 className="text-lg font-bold tracking-tight uppercase text-slate-900">Administrator Login</h1>
+            <p className="text-xs text-slate-600">Enter Admin password to access `/admin` control panel</p>
           </div>
 
-          <div className="p-3 bg-[#0B0F17] border border-[#1E2638] rounded-lg flex items-center space-x-3 text-xs font-mono">
-            <div className="p-2 bg-[#1C2537] rounded text-slate-300">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center space-x-3 text-xs font-mono">
+            <div className="p-2 bg-slate-200 rounded text-slate-800">
               <Mail className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-semibold text-slate-200">admin@hospital.com</div>
-              <div className="text-[11px] text-slate-400">System Administrator</div>
+              <div className="font-semibold text-slate-900">admin@hospital.com</div>
+              <div className="text-[11px] text-slate-600">System Administrator</div>
             </div>
           </div>
 
-          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs font-mono">
             {adminLoginError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400" />
+              <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-center font-semibold flex items-center justify-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-red-600" />
                 <span>{adminLoginError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-slate-300 font-medium mb-1.5">
+              <label className="block text-slate-700 font-medium mb-1.5">
                 Admin Password
               </label>
               <div className="relative">
@@ -166,21 +166,21 @@ export default function AdminPage() {
                   value={adminPasswordInput}
                   onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
                   placeholder="Enter admin password"
-                  className="w-full bg-[#0B0F17] border border-[#1E2638] rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg transition-colors text-xs"
+              className="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded-lg transition-colors text-xs shadow-sm"
             >
               Sign In as Administrator
             </button>
           </form>
 
           <div className="pt-2 text-center">
-            <Link href="/" className="text-xs text-slate-400 hover:text-slate-200 inline-flex items-center">
+            <Link href="/" className="text-xs text-slate-600 hover:text-slate-900 inline-flex items-center">
               <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Main Portal Choice
             </Link>
           </div>
@@ -192,15 +192,15 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-center text-slate-300">
-        <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs font-mono text-slate-400">Loading Clinical Triage Telemetry...</p>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center text-slate-800 font-mono">
+        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs text-slate-600">Loading Clinical Triage Telemetry...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#0B0F17] flex flex-col">
+    <main className="min-h-screen bg-white flex flex-col font-sans text-slate-900">
       <Header
         patients={patients}
         strideCount={strideCount}

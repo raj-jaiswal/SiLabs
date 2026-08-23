@@ -28,25 +28,25 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     switch (rank) {
       case 'P1_CRITICAL':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-red-50 text-red-700 border border-red-300">
             P1 CRITICAL
           </span>
         );
       case 'P2_HIGH':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-amber-50 text-amber-700 border border-amber-300">
             P2 HIGH
           </span>
         );
       case 'P3_MODERATE':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-yellow-500/10 text-yellow-300 border border-yellow-500/20">
+          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-yellow-50 text-yellow-800 border border-yellow-300">
             P3 MODERATE
           </span>
         );
       case 'P4_STABLE':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">
             P4 STABLE
           </span>
         );
@@ -57,22 +57,22 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     const isAlert = risk.status === 'ACTIVE_ALERT';
     const isElevated = risk.status === 'ELEVATED_RISK';
 
-    const valueColor = isAlert ? 'text-rose-400 font-bold' : isElevated ? 'text-amber-400 font-semibold' : 'text-slate-200';
-    const barColor = isAlert ? 'bg-rose-500' : isElevated ? 'bg-amber-500' : 'bg-slate-600';
+    const valueColor = isAlert ? 'text-red-600 font-bold' : isElevated ? 'text-amber-600 font-bold' : 'text-slate-900 font-medium';
+    const barColor = isAlert ? 'bg-red-600' : isElevated ? 'bg-amber-500' : 'bg-emerald-500';
 
     return (
       <div className="space-y-1 font-mono tabular-nums text-xs">
         <div className="flex items-center justify-between space-x-2">
           <span className={`text-sm ${valueColor}`}>
-            {risk.currentValue} <span className="text-[11px] text-slate-400 font-normal">{risk.unit}</span>
+            {risk.currentValue} <span className="text-[11px] text-slate-500 font-normal">{risk.unit}</span>
           </span>
-          <span className={`text-[11px] ${isAlert ? 'text-rose-300 font-bold' : isElevated ? 'text-amber-300/90 font-medium' : 'text-slate-400'}`}>
+          <span className={`text-[11px] ${isAlert ? 'text-red-700 font-bold' : isElevated ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
             {risk.probability}% risk
           </span>
         </div>
         
-        {/* Subtle 2px Micro Progress Bar */}
-        <div className="w-full bg-[#0B0F17] h-1 rounded-full overflow-hidden border border-[#1E2638]">
+        {/* Subtle 2px Micro Progress Bar (Red, Yellow, Green ONLY) */}
+        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
           <div
             className={`h-full rounded-full transition-all duration-300 ${barColor}`}
             style={{ width: `${Math.max(5, risk.probability)}%` }}
@@ -84,15 +84,15 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-6">
-      <div className="bg-[#131926] border border-[#1E2638] rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         {/* Table Header Controls */}
-        <div className="px-6 py-3.5 border-b border-[#1E2638] flex items-center justify-between select-none">
-          <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center">
-            <Activity className="w-4 h-4 mr-2 text-sky-400" />
+        <div className="px-6 py-3.5 border-b border-slate-200 flex items-center justify-between select-none bg-slate-50">
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
+            <Activity className="w-4 h-4 mr-2 text-slate-700" />
             Priority Triage Queue (Auto-Sorted)
           </h2>
-          <div className="flex items-center space-x-3 text-xs text-slate-400 font-mono">
-            <span className="inline-flex items-center px-2 py-0.5 rounded bg-[#0B0F17] text-sky-400 border border-[#1E2638] text-[11px]">
+          <div className="flex items-center space-x-3 text-xs text-slate-600 font-mono">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-white text-slate-800 border border-slate-300 text-[11px]">
               5s Stride Sampling
             </span>
             <span>Showing {sortedPatients.length} Active Patients</span>
@@ -103,7 +103,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse select-none">
             <thead>
-              <tr className="border-b border-[#1E2638] bg-[#0B0F17] text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-mono font-bold text-slate-700 uppercase tracking-wider">
                 <th className="py-3 px-4">Priority Rank</th>
                 <th className="py-3 px-4">Patient Profile</th>
                 <th className="py-3 px-4">Clinical Metadata</th>
@@ -113,7 +113,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1E2638] text-sm">
+            <tbody className="divide-y divide-slate-200 text-sm">
               {sortedPatients.map((patient) => {
                 const { profile, hypotension, hypoxia, tachycardia, triageRank } = patient;
                 const isEsp32 = profile.isEsp32Live || profile.id === 'PATIENT-000';
@@ -124,7 +124,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                     onClick={() => onSelectPatient(patient)}
                     className={`table-row-hover cursor-pointer group ${
                       isEsp32
-                        ? 'bg-[#182030] border-l-2 border-amber-400/80'
+                        ? 'bg-amber-50/60 border-l-4 border-amber-500'
                         : ''
                     }`}
                   >
@@ -136,28 +136,28 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                     {/* Patient Profile */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg border ${isEsp32 ? 'bg-[#1C2537] border-amber-500/30 text-amber-300' : 'bg-[#0B0F17] border-[#1E2638] text-slate-400'}`}>
+                        <div className={`p-2 rounded-lg border ${isEsp32 ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-slate-100 border-slate-200 text-slate-700'}`}>
                           <User className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-100 group-hover:text-sky-400 transition-colors flex items-center space-x-2">
+                          <div className="font-bold text-slate-900 group-hover:text-black transition-colors flex items-center space-x-2">
                             <span>{profile.patientNumber}</span>
                             {isEsp32 && profile.isStale ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center">
-                                <AlertTriangle className="w-3 h-3 mr-1 text-amber-400" />
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center">
+                                <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" />
                                 NO DATA (&gt;20s)
                               </span>
                             ) : isEsp32 ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1" />
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mr-1" />
                                 ESP32 LIVE
                               </span>
                             ) : null}
                           </div>
-                          <div className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
+                          <div className="text-xs text-slate-600 flex items-center space-x-2 mt-0.5">
                             <span>{profile.age} yrs, {profile.sex}</span>
                             <span>•</span>
-                            <span className="text-slate-300 font-medium">{profile.bloodType}</span>
+                            <span className="text-slate-800 font-semibold">{profile.bloodType}</span>
                           </div>
                         </div>
                       </div>
@@ -165,10 +165,10 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
 
                     {/* Clinical Metadata */}
                     <td className="py-3.5 px-4 max-w-xs">
-                      <div className="text-xs font-semibold text-slate-200 truncate">
+                      <div className="text-xs font-semibold text-slate-900 truncate">
                         {profile.primaryDiagnosis}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                      <div className="text-[11px] text-slate-600 truncate mt-0.5">
                         {profile.comorbidities.join(', ')}
                       </div>
                     </td>
@@ -191,7 +191,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                           e.stopPropagation();
                           onSelectPatient(patient);
                         }}
-                        className="px-3 py-1.5 bg-[#0B0F17] hover:bg-[#1C2537] text-slate-300 hover:text-white border border-[#1E2638] rounded-lg text-xs font-medium transition-colors"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold transition-colors"
                       >
                         Inspect Vitals
                       </button>
