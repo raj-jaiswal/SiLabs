@@ -59,9 +59,9 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
             <span>{label}</span>
             <span className="bg-rose-900 text-rose-200 px-1.5 py-0.5 rounded text-[10px]">ALERT</span>
           </div>
-          <div className="text-sm font-semibold text-slate-100 mt-1">
-            {risk.currentValue} {risk.unit}
-            <span className="text-xs text-rose-300 font-normal ml-2">({risk.probability}% risk)</span>
+          <div className="text-sm font-semibold text-slate-100 mt-1 flex items-baseline justify-between flex-wrap">
+            <span>{risk.currentValue} <span className="text-xs text-slate-400 font-normal">{risk.unit} (Current)</span></span>
+            <span className="text-xs text-rose-300 font-bold">({risk.probability}% predicted risk)</span>
           </div>
         </div>
       );
@@ -72,9 +72,9 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
             <span>{label}</span>
             <span className="bg-amber-900/80 text-amber-200 px-1.5 py-0.5 rounded text-[10px]">ELEVATED</span>
           </div>
-          <div className="text-sm font-medium text-slate-200 mt-1">
-            {risk.currentValue} {risk.unit}
-            <span className="text-xs text-amber-300/80 font-normal ml-2">({risk.probability}%)</span>
+          <div className="text-sm font-medium text-slate-200 mt-1 flex items-baseline justify-between flex-wrap">
+            <span>{risk.currentValue} <span className="text-xs text-slate-400 font-normal">{risk.unit} (Current)</span></span>
+            <span className="text-xs text-amber-300/90 font-bold">({risk.probability}% predicted risk)</span>
           </div>
         </div>
       );
@@ -83,9 +83,9 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     return (
       <div className="bg-slate-900/80 border border-slate-800 rounded-md p-2 text-left">
         <div className="text-[11px] font-medium text-slate-400">{label}</div>
-        <div className="text-sm font-medium text-slate-300 mt-0.5">
-          {risk.currentValue} {risk.unit}
-          <span className="text-[11px] text-slate-500 font-normal ml-1.5">({risk.probability}%)</span>
+        <div className="text-sm font-medium text-slate-300 mt-0.5 flex items-baseline justify-between flex-wrap">
+          <span>{risk.currentValue} <span className="text-xs text-slate-500 font-normal">{risk.unit} (Current)</span></span>
+          <span className="text-[11px] text-slate-400 font-medium">({risk.probability}% predicted risk)</span>
         </div>
       </div>
     );
