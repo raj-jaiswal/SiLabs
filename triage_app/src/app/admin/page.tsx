@@ -2,10 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
+import { NavigationRail } from '@/components/NavigationRail';
+import { TemporalForecastingCanvas } from '@/components/TemporalForecastingCanvas';
+import { PatientTrajectoryList } from '@/components/PatientTrajectoryList';
 import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
 import { CriticalAlertBar } from '@/components/CriticalAlertBar';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { ClinicalIntelligenceStream } from '@/components/ClinicalIntelligenceStream';
 import { useAuth } from '@/context/AuthContext';
 import { PatientState } from '@/types/patient';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
@@ -20,7 +24,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
-  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(true);
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('forecast'); // 'forecast' | 'trajectories' | 'esp32'
 
   // Admin Login State for /admin
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -124,18 +129,18 @@ export default function AdminPage() {
   // Gated Auth: If not logged in as Admin, prompt for Admin password
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-md bg-slate-900 border border-rose-950 rounded-2xl p-8 shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#080B10] flex flex-col items-center justify-center p-6 text-[#F5F7FA]">
+        <div className="w-full max-w-md bg-[#0D1117] border border-rose-950/80 rounded-2xl p-8 shadow-2xl space-y-6">
           
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 select-none">
             <div className="inline-flex p-3 bg-rose-950/80 rounded-xl border border-rose-800 text-rose-300 mb-1">
               <Shield className="w-7 h-7" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight uppercase text-rose-100">Administrator Login</h1>
-            <p className="text-xs text-slate-400">Enter Admin password to access `/admin` control panel</p>
+            <h1 className="text-xl font-bold tracking-tight uppercase text-rose-100 font-mono">Administrator Login</h1>
+            <p className="text-xs text-[#9AA4B2]">Enter Admin password to access `/admin` control panel</p>
           </div>
 
-          <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-lg flex items-center space-x-3 text-xs">
+          <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-lg flex items-center space-x-3 text-xs font-mono">
             <div className="p-2 bg-rose-900/60 rounded text-rose-300">
               <Mail className="w-4 h-4" />
             </div>
@@ -145,7 +150,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs font-mono">
             {adminLoginError && (
               <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
                 <ShieldAlert className="w-4 h-4 text-rose-400" />
@@ -166,7 +171,7 @@ export default function AdminPage() {
                   value={adminPasswordInput}
                   onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
                   placeholder="Enter admin password"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500"
+                  className="w-full bg-[#080B10] border border-[#1E2631] rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500"
                 />
               </div>
             </div>
@@ -192,51 +197,32 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
-        <div className="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-medium text-slate-400">Initializing Admin Telemetry &amp; Dispatch Console...</p>
+      <div className="min-h-screen bg-[#080B10] flex flex-col items-center justify-center text-slate-300">
+        <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-medium text-[#9AA4B2] font-mono">Initializing Hospital Intelligence &amp; Command Center...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-[#080B10] text-[#F5F7FA] flex flex-col">
       {/* Route Indicator Bar */}
-      <div className="bg-rose-950 text-rose-200 text-xs py-1 px-6 border-b border-rose-900 flex items-center justify-between font-mono">
+      <div className="bg-rose-950/80 text-rose-200 text-xs py-1 px-6 border-b border-rose-900 flex items-center justify-between font-mono select-none">
         <div className="flex items-center space-x-2">
           <Shield className="w-3.5 h-3.5 text-rose-400" />
           <span className="font-bold">ADMIN PORTAL ROUTE: /admin</span>
         </div>
-        <span>Master Control &amp; Dispatch Active</span>
+        <span>Master Command &amp; Dispatch Console Active</span>
       </div>
 
-      {/* Logged-In Administrator Identity Banner */}
-      <div className="bg-rose-950/90 border-b border-rose-800/80 px-6 py-2.5 flex items-center justify-between shadow-inner">
-        <div className="flex items-center space-x-3 text-xs">
-          <div className="p-1.5 bg-rose-900/90 rounded-lg border border-rose-700 text-rose-300 font-bold animate-pulse">
-            <Shield className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold mr-1.5">Active Admin Account:</span>
-            <span className="font-black text-rose-200 text-sm tracking-wide bg-rose-900/60 px-2.5 py-1 rounded-md border border-rose-700">
-              {currentUser.name} (SYSTEM ADMINISTRATOR)
-            </span>
-            <span className="text-slate-400 font-mono text-xs ml-2">({currentUser.email})</span>
-          </div>
-        </div>
-        <div className="text-xs text-rose-300 font-bold bg-rose-900/60 px-2.5 py-1 rounded border border-rose-700 flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
-          <span>ADMIN MASTER CONTROL ACTIVE</span>
-        </div>
-      </div>
-
+      {/* Main Command Center Header */}
       <Header
         patients={patients}
         strideCount={strideCount}
         onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
         onReSyncClock={handleReSyncClock}
       />
-      
+
       {!dismissAlertBar && (
         <CriticalAlertBar
           criticalPatients={criticalPatients}
@@ -245,10 +231,35 @@ export default function AdminPage() {
         />
       )}
 
-      <div className="flex-1">
-        <TriageTable
+      {/* 3-Column Wide Desktop Command-Center Composition */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* 1. Left Narrow Navigation Rail */}
+        <NavigationRail
+          activeTab={activeTab}
+          onSelectTab={(t) => setActiveTab(t)}
+          onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
+          isAdmin={true}
+        />
+
+        {/* 2. Main Center Canvas */}
+        <main className="flex-1 p-6 overflow-y-auto space-y-6">
+          {/* Hero Temporal Forecasting Canvas */}
+          <TemporalForecastingCanvas
+            patients={patients}
+            strideCount={strideCount}
+          />
+
+          {/* Horizontal Patient Trajectory Mission Control */}
+          <PatientTrajectoryList
+            patients={patients}
+            onSelectPatient={(p) => setSelectedPatientId(p.profile.id)}
+          />
+        </main>
+
+        {/* 3. Right Clinical Intelligence Stream Panel */}
+        <ClinicalIntelligenceStream
           patients={patients}
-          onSelectPatient={(patient) => setSelectedPatientId(patient.profile.id)}
+          onSelectPatient={(id) => setSelectedPatientId(id)}
         />
       </div>
 
@@ -262,6 +273,6 @@ export default function AdminPage() {
         isOpen={isAdminSidebarOpen}
         onClose={() => setIsAdminSidebarOpen(false)}
       />
-    </main>
+    </div>
   );
 }

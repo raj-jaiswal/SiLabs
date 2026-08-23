@@ -2,8 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #090d16;
-  color: #f8fafc;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@layer base {
+  body {
+    background-color: #080B10;
+    color: #F5F7FA;
+    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+.bg-grid-pattern {
+  background-size: 30px 30px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.border-clinical {
+  border-color: rgba(30, 38, 49, 0.8);
+}
+
+.glass-panel {
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 38, 49, 0.8);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.glow-red {
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.25);
+}
+
+.glow-amber {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
