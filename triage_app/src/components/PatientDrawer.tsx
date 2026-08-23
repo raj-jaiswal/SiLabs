@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Activity, Stethoscope, FileText } from 'lucide-react';
+import { X, User, Activity, Stethoscope, FileText, AlertTriangle } from 'lucide-react';
 import { PatientState } from '../types/patient';
 
 interface PatientDrawerProps {
@@ -11,6 +11,7 @@ export const PatientDrawer: React.FC<PatientDrawerProps> = ({ patient, onClose }
   if (!patient) return null;
 
   const { profile, currentFrame, hypotension, hypoxia, tachycardia, vitalsHistory } = patient;
+  const isEsp32 = profile.isEsp32Live || profile.id === 'PATIENT-000';
 
   return (
     <div
@@ -30,12 +31,17 @@ export const PatientDrawer: React.FC<PatientDrawerProps> = ({ patient, onClose }
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="text-lg font-bold text-slate-100">{profile.patientNumber}</h2>
-                {(profile.isEsp32Live || profile.id === 'PATIENT-000') && (
+                {isEsp32 && profile.isStale ? (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shadow-sm font-mono flex items-center animate-pulse">
+                    <AlertTriangle className="w-3 h-3 mr-1 text-amber-400" />
+                    NOT SHOWING DATA (&gt;20s)
+                  </span>
+                ) : isEsp32 ? (
                   <span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-700 text-slate-200 border border-slate-500 shadow-sm font-mono flex items-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1" />
                     ESP32 LIVE STREAM
                   </span>
-                )}
+                ) : null}
               </div>
               <p className="text-xs text-slate-400">
                 {profile.age} yrs • {profile.sex} • Blood Group: <span className="text-slate-200 font-semibold">{profile.bloodType}</span>

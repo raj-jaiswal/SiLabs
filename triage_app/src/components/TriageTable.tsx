@@ -149,12 +149,17 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                         <div>
                           <div className="font-bold text-slate-100 group-hover:text-sky-400 transition-colors flex items-center space-x-2">
                             <span>{profile.patientNumber}</span>
-                            {isEsp32 && (
+                            {isEsp32 && profile.isStale ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shadow-sm font-mono flex items-center animate-pulse">
+                                <AlertTriangle className="w-3 h-3 mr-1 text-amber-400" />
+                                NOT SHOWING DATA (&gt;20s)
+                              </span>
+                            ) : isEsp32 ? (
                               <span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-700 text-slate-200 border border-slate-500 shadow-sm font-mono flex items-center">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1" />
                                 ESP32 LIVE
                               </span>
-                            )}
+                            ) : null}
                           </div>
                           <div className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                             <span>{profile.age} yrs, {profile.sex}</span>

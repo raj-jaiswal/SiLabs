@@ -91,17 +91,35 @@ export async function GET() {
 
     // 2. Fetch Live ESP32 Telemetry for PATIENT-000 from server.py (port 5000)
     let esp32Scores: number[] = [0.87, 0.95, 0.40]; // Default baseline scores
+    let isStale = false;
+    let lastUpdateSecAgo = 0;
+
     try {
       const esp32Res = await fetch('http://localhost:5000/api/devices', { cache: 'no-store', signal: AbortSignal.timeout(1000) });
       if (esp32Res.ok) {
         const devices = await esp32Res.json();
         const firstDev = Object.values(devices)[0] as any;
-        if (firstDev && Array.isArray(firstDev.scores) && firstDev.scores.length > 0) {
-          esp32Scores = firstDev.scores;
+        if (firstDev) {
+          if (Array.isArray(firstDev.scores) && firstDev.scores.length > 0) {
+            esp32Scores = firstDev.scores;
+          }
+          if (firstDev.last_updated_epoch) {
+            const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - firstDev.last_updated_epoch));
+            lastUpdateSecAgo = elapsed;
+            if (elapsed >= 20) {
+              isStale = true;
+            }
+          } else {
+            isStale = true;
+          }
+        } else {
+          isStale = true;
         }
+      } else {
+        isStale = true;
       }
     } catch (e) {
-      // server.py offline or no data yet, fallback to default baseline without breaking
+      isStale = true;
     }
 
     // Build PATIENT-000 Vitals History (50 frames matching 10 offline patients)
@@ -127,6 +145,9 @@ export async function GET() {
     }
 
     const p000Profile = generateDemographics('PATIENT-000');
+    p000Profile.isStale = isStale;
+    p000Profile.lastUpdateSecAgo = lastUpdateSecAgo;
+
     const p000RiskEval = evaluatePatientRisk(esp32VitalsHistory, 0);
 
     // Override predictions with exact ESP32 model probability scores
@@ -157,6 +178,8 @@ export async function GET() {
       triageRank: p000RiskEval.triageRank,
       activeEventCount: (esp32Scores[0] >= 0.5 ? 1 : 0) + (esp32Scores[1] >= 0.5 ? 1 : 0) + (esp32Scores[2] >= 0.5 ? 1 : 0),
       isEsp32Live: true,
+      isStale,
+      lastUpdateSecAgo,
     });
 
     return NextResponse.json({ patients: patientStates });

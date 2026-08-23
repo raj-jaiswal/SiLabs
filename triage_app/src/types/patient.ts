@@ -22,6 +22,8 @@ export interface PatientDemographics {
   allergies: string[];
   attendingPhysician: string;
   isEsp32Live?: boolean;
+  isStale?: boolean;
+  lastUpdateSecAgo?: number;
 }
 
 export interface VitalFrame {
@@ -49,4 +51,6 @@ export interface PatientState {
   triageRank: TriageRank;
   activeEventCount: number;
   isEsp32Live?: boolean;
+  isStale?: boolean;
+  lastUpdateSecAgo?: number;
 }
