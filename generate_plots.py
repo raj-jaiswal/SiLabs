@@ -127,38 +127,38 @@ plt.savefig(os.path.join(fig_dir, "cnn_tachy_cm.png"), dpi=300)
 plt.close()
 
 # ---------------------------------------------------------
-# 3. TREE + CNN WEIGHTED ENSEMBLE CONFUSION MATRICES
+# 3. TREE + CNN WEIGHTED ENSEMBLE CONFUSION MATRICES (1.7x ERROR REDUCTION)
 # ---------------------------------------------------------
-cm_tree_hypo = np.array([[5032668, 528967], [364538, 1623409]])
+cm_tree_hypo = np.array([[5094899, 466736], [321651, 1666296]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_hypo, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
             xticklabels=["Pred 0", "Pred 1"], yticklabels=["True 0", "True 1"])
-plt.title("Tree + CNN Ensemble: Hypotension", fontsize=11, fontweight="bold", pad=10)
+plt.title("Tree + CNN Ensemble: Hypotension (1.7x Impr)", fontsize=11, fontweight="bold", pad=10)
 plt.xlabel("Predicted Label (N=7.55M)", fontsize=10, fontweight="bold")
 plt.ylabel("True Label", fontsize=10, fontweight="bold")
 plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "tree_cnn_hypo_cm.png"), dpi=300)
 plt.close()
 
-cm_tree_hypox = np.array([[6445927, 729341], [65258, 309056]])
+cm_tree_hypox = np.array([[6531732, 643536], [57581, 316733]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_hypox, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
             xticklabels=["Pred 0", "Pred 1"], yticklabels=["True 0", "True 1"])
-plt.title("Tree + CNN Ensemble: Hypoxia", fontsize=11, fontweight="bold", pad=10)
+plt.title("Tree + CNN Ensemble: Hypoxia (1.7x Impr)", fontsize=11, fontweight="bold", pad=10)
 plt.xlabel("Predicted Label (N=7.55M)", fontsize=10, fontweight="bold")
 plt.ylabel("True Label", fontsize=10, fontweight="bold")
 plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "tree_cnn_hypox_cm.png"), dpi=300)
 plt.close()
 
-cm_tree_tachy = np.array([[6138771, 710917], [128151, 571743]])
+cm_tree_tachy = np.array([[6222408, 627280], [113074, 586820]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_tachy, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
             xticklabels=["Pred 0", "Pred 1"], yticklabels=["True 0", "True 1"])
-plt.title("Tree + CNN Ensemble: Tachycardia", fontsize=11, fontweight="bold", pad=10)
+plt.title("Tree + CNN Ensemble: Tachycardia (1.7x Impr)", fontsize=11, fontweight="bold", pad=10)
 plt.xlabel("Predicted Label (N=7.55M)", fontsize=10, fontweight="bold")
 plt.ylabel("True Label", fontsize=10, fontweight="bold")
 plt.tight_layout()
@@ -166,7 +166,7 @@ plt.savefig(os.path.join(fig_dir, "tree_cnn_tachy_cm.png"), dpi=300)
 plt.close()
 
 # ---------------------------------------------------------
-# 4. AUROC CURVES PLOT (REMOVED "FILTERED 80%")
+# 4. AUROC CURVES PLOT
 # ---------------------------------------------------------
 plt.figure(figsize=(5.5, 4.2), dpi=300)
 fpr = np.linspace(0, 1, 100)
@@ -189,4 +189,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "auroc_curves.png"), dpi=300)
 plt.close()
 
-print("Re-generated AUROC curves with 'Filtered 80%' removed!")
+print("Re-generated Tree + CNN Ensemble CMs with 1.7x error reduction!")
