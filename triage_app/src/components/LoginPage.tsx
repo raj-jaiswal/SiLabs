@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { HeartPulse, Lock, Mail, ShieldAlert, Shield, User, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types/auth';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,7 +16,13 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!login(email, password)) {
+    if (login(email, password)) {
+      if (selectedRole === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/user');
+      }
+    } else {
       setError('Invalid Email ID or Password for the selected account.');
     }
   };
