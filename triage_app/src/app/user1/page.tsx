@@ -2,6 +2,6 @@
 
 import { UserPortalPage } from '@/components/UserPortalPage';
 
-export default function UserPage() {
+export default function User1Page() {
   return <UserPortalPage targetSlug="user1" />;
 }
