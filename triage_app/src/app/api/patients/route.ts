@@ -98,15 +98,24 @@ export async function GET() {
       const esp32Res = await fetch('http://localhost:5000/api/devices', { cache: 'no-store', signal: AbortSignal.timeout(1000) });
       if (esp32Res.ok) {
         const devices = await esp32Res.json();
-        const firstDev = Object.values(devices)[0] as any;
-        if (firstDev) {
-          if (Array.isArray(firstDev.scores) && firstDev.scores.length > 0) {
-            esp32Scores = firstDev.scores;
-          }
-          if (firstDev.last_updated_epoch) {
-            const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - firstDev.last_updated_epoch));
-            lastUpdateSecAgo = elapsed;
-            if (elapsed >= 20) {
+        const deviceList = Object.values(devices) as any[];
+
+        if (deviceList.length > 0) {
+          // Sort devices by last_updated_epoch descending to get the MOST RECENT active streaming device!
+          deviceList.sort((a, b) => (b.last_updated_epoch || 0) - (a.last_updated_epoch || 0));
+          const activeDev = deviceList[0];
+
+          if (activeDev) {
+            if (Array.isArray(activeDev.scores) && activeDev.scores.length > 0) {
+              esp32Scores = activeDev.scores;
+            }
+            if (activeDev.last_updated_epoch) {
+              const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - activeDev.last_updated_epoch));
+              lastUpdateSecAgo = elapsed;
+              if (elapsed >= 20) {
+                isStale = true;
+              }
+            } else {
               isStale = true;
             }
           } else {
