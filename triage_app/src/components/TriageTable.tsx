@@ -57,21 +57,21 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     const isAlert = risk.status === 'ACTIVE_ALERT';
     const isElevated = risk.status === 'ELEVATED_RISK';
 
-    const valueColor = isAlert ? 'text-red-600 font-bold' : isElevated ? 'text-amber-600 font-bold' : 'text-slate-900 font-medium';
+    const valueColor = isAlert ? 'text-red-600 font-extrabold' : isElevated ? 'text-amber-600 font-bold' : 'text-slate-900 font-bold';
     const barColor = isAlert ? 'bg-red-600' : isElevated ? 'bg-amber-500' : 'bg-emerald-500';
 
     return (
-      <div className="space-y-1 font-mono tabular-nums text-xs">
-        <div className="flex items-center justify-between space-x-2">
-          <span className={`text-sm ${valueColor}`}>
-            {risk.currentValue} <span className="text-[11px] text-slate-500 font-normal">{risk.unit}</span>
+      <div className="space-y-1 font-mono tabular-nums">
+        <div className="flex items-baseline justify-between space-x-2">
+          <span className={`text-base ${valueColor}`}>
+            {risk.currentValue.toFixed(1)} <span className="text-xs text-slate-500 font-medium font-sans">{risk.unit}</span>
           </span>
-          <span className={`text-[11px] ${isAlert ? 'text-red-700 font-bold' : isElevated ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
+          <span className={`text-xs ${isAlert ? 'text-red-700 font-bold' : isElevated ? 'text-amber-700 font-bold' : 'text-slate-600 font-medium'}`}>
             {risk.probability}% risk
           </span>
         </div>
         
-        {/* Subtle 2px Micro Progress Bar (Red, Yellow, Green ONLY) */}
+        {/* Micro Clinical Progress Bar */}
         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200">
           <div
             className={`h-full rounded-full transition-all duration-300 ${barColor}`}
