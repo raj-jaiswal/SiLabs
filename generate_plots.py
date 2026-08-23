@@ -11,8 +11,8 @@ os.makedirs(fig_dir, exist_ok=True)
 # 1. PREPROCESSING CHARTS FROM data_preprocessing.ipynb (HUGE FONTS)
 # ---------------------------------------------------------
 
-# Chart 1: Raw vs Cleaned Biosignal Waveforms & Hemodynamic Hierarchy (HUGE FOR FRONT PAGE)
-fig, axes = plt.subplots(4, 1, figsize=(9.5, 6.5), sharex=True, dpi=300)
+# Chart 1: Raw vs Cleaned Biosignal Waveforms & Hemodynamic Hierarchy (PAGE 1 DEDICATED)
+fig, axes = plt.subplots(4, 1, figsize=(9.5, 6.2), sharex=True, dpi=300)
 t = np.linspace(0, 600, 300)
 
 # 1A. HR: Raw vs Filtered
@@ -21,7 +21,7 @@ hr_raw = hr_clean.copy()
 hr_raw[40:43] = -49.0 # Sensor disconnect code
 hr_raw[150:153] = 230.0 # Motion artifact spike
 
-axes[0].plot(t, hr_raw, color="#EF4444", alpha=0.5, lw=1.8, label="Raw Sensor Data (Spikes & Disconnects)")
+axes[0].plot(t, hr_raw, color="#EF4444", alpha=0.55, lw=1.8, label="Raw Sensor Data (Disconnect Codes -49 & Motion Spikes)")
 axes[0].plot(t, hr_clean, color="#059669", lw=2.4, label="Cleaned HR (Plausibility Bounds 20-250 bpm)")
 axes[0].set_ylabel("HR (bpm)", fontsize=11, fontweight="bold")
 axes[0].set_ylim(0, 250)
@@ -59,30 +59,30 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "preprocessing_raw_vs_clean.png"), dpi=300)
 plt.close()
 
-# Chart 2: Intraoperative Adverse Event Risk Distributions
-fig, axes = plt.subplots(1, 3, figsize=(8.5, 3.5), dpi=300)
+# Chart 2: Intraoperative Adverse Event Risk Distributions (PAGE 2 DEDICATED)
+fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.2), dpi=300)
 np.random.seed(42)
 
 # Hypotension
 hypo_dist = np.random.beta(1.5, 5, 3765) * 100
 axes[0].hist(hypo_dist, bins=25, color="#FCA5A5", edgecolor="#DC2626", alpha=0.85)
-axes[0].set_title("Hypotension Cohort Risk (%)", fontsize=10, fontweight="bold")
-axes[0].set_xlabel("% Time MAP < 65 mmHg", fontsize=9, fontweight="bold")
-axes[0].set_ylabel("Patient Count (N=3,765)", fontsize=9, fontweight="bold")
+axes[0].set_title("Hypotension Cohort Risk (%)", fontsize=11, fontweight="bold")
+axes[0].set_xlabel("% Time MAP < 65 mmHg", fontsize=10, fontweight="bold")
+axes[0].set_ylabel("Patient Count (N=3,765)", fontsize=10, fontweight="bold")
 
 # Tachycardia
 tachy_dist = np.random.beta(1.8, 4.5, 3765) * 100
 axes[1].hist(tachy_dist, bins=25, color="#FDE68A", edgecolor="#D97706", alpha=0.85)
-axes[1].set_title("Tachycardia Cohort Risk (%)", fontsize=10, fontweight="bold")
-axes[1].set_xlabel("% Time HR > 100 bpm", fontsize=9, fontweight="bold")
+axes[1].set_title("Tachycardia Cohort Risk (%)", fontsize=11, fontweight="bold")
+axes[1].set_xlabel("% Time HR > 100 bpm", fontsize=10, fontweight="bold")
 
 # Hypoxia
 hypox_dist = np.random.beta(1.2, 8, 3765) * 100
 axes[2].hist(hypox_dist, bins=25, color="#BAE6FD", edgecolor="#0284C7", alpha=0.85)
-axes[2].set_title("Hypoxia Cohort Risk (%)", fontsize=10, fontweight="bold")
-axes[2].set_xlabel("% Time SpO2 < 90%", fontsize=9, fontweight="bold")
+axes[2].set_title("Hypoxia Cohort Risk (%)", fontsize=11, fontweight="bold")
+axes[2].set_xlabel("% Time SpO2 < 90%", fontsize=10, fontweight="bold")
 
-plt.suptitle("Clinical Preprocessing 2: Perioperative Patient Cohort Adverse Event Distributions", fontsize=11, fontweight="bold", y=1.03)
+plt.suptitle("Clinical Preprocessing 2: Perioperative Patient Cohort Adverse Event Distributions", fontsize=12, fontweight="bold", y=1.03)
 plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "preprocessing_event_distribution.png"), dpi=300)
 plt.close()
@@ -189,4 +189,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "auroc_curves.png"), dpi=300)
 plt.close()
 
-print("Re-generated all plots with enlarged fonts and dimensions!")
+print("Re-generated all preprocessing charts for 2 dedicated pages!")
