@@ -8,6 +8,7 @@ const DEFAULT_USERS: UserAccount[] = [
   { id: '2', name: 'User 1', email: 'user1@hospital.com', password: 'user1', role: 'USER', createdAt: new Date().toISOString() },
   { id: '3', name: 'User 2', email: 'user2@hospital.com', password: 'user2', role: 'USER', createdAt: new Date().toISOString() },
   { id: '4', name: 'User 3', email: 'user3@hospital.com', password: 'user3', role: 'USER', createdAt: new Date().toISOString() },
+  { id: '5', name: 'User 4', email: 'user4@hospital.com', password: 'user4', role: 'USER', createdAt: new Date().toISOString() },
 ];
 
 interface AuthContextType {

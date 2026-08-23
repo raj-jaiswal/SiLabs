@@ -6,22 +6,25 @@ import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
 import { CriticalAlertBar } from '@/components/CriticalAlertBar';
 import { AdminSidebar } from '@/components/AdminSidebar';
-import { LoginPage } from '@/components/LoginPage';
 import { useAuth } from '@/context/AuthContext';
 import { PatientState } from '@/types/patient';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowLeft, ShieldAlert, HeartPulse } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, login } = useAuth();
   const [patients, setPatients] = useState<PatientState[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [strideCount, setStrideCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
-  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(true); // Open by default for Admin
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(true);
+
+  // Admin Login State for /admin
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [adminLoginError, setAdminLoginError] = useState('');
 
   // 1. Fetch patient data from API on mount
   useEffect(() => {
@@ -85,32 +88,86 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [patients.length, currentUser]);
 
+  const handleAdminLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login('admin@hospital.com', adminPasswordInput)) {
+      setAdminLoginError('');
+      setAdminPasswordInput('');
+    } else {
+      setAdminLoginError('Incorrect Administrator password.');
+    }
+  };
+
   const selectedPatient = selectedPatientId
     ? patients.find(p => p.profile.id === selectedPatientId) || null
     : null;
 
   const criticalPatients = patients.filter(p => p.triageRank === 'P1_CRITICAL');
 
-  // Gated Auth: If not logged in as Admin, show login prompt
+  // Gated Auth: If not logged in as Admin, prompt for Admin password
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-md bg-slate-900 border border-rose-950 rounded-2xl p-8 shadow-2xl text-center space-y-4">
-          <div className="inline-flex p-3 bg-rose-950/80 rounded-xl border border-rose-800 text-rose-300">
-            <Shield className="w-8 h-8" />
+        <div className="w-full max-w-md bg-slate-900 border border-rose-950 rounded-2xl p-8 shadow-2xl space-y-6">
+          
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 bg-rose-950/80 rounded-xl border border-rose-800 text-rose-300 mb-1">
+              <Shield className="w-7 h-7" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight uppercase text-rose-100">Administrator Login</h1>
+            <p className="text-xs text-slate-400">Enter Admin password to access `/admin` control panel</p>
           </div>
-          <h1 className="text-xl font-bold text-slate-100 uppercase">Admin Access Required</h1>
-          <p className="text-xs text-slate-400">
-            You must be logged in as an Administrator (`admin@hospital.com`) to access `/admin`.
-          </p>
-          <div className="pt-2 flex flex-col space-y-2">
-            <Link
-              href="/"
-              className="py-2.5 bg-sky-600 hover:bg-sky-500 font-bold text-white rounded-lg transition-colors text-xs inline-flex items-center justify-center"
+
+          <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-lg flex items-center space-x-3 text-xs">
+            <div className="p-2 bg-rose-900/60 rounded text-rose-300">
+              <Mail className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-rose-200">Admin (`admin@hospital.com`)</div>
+              <div className="text-[11px] text-rose-400/80">System Administrator Account</div>
+            </div>
+          </div>
+
+          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs">
+            {adminLoginError && (
+              <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-rose-400" />
+                <span>{adminLoginError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-slate-300 font-medium mb-1.5">
+                Admin Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  autoFocus
+                  value={adminPasswordInput}
+                  onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
+                  placeholder="Enter admin password"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-rose-950"
             >
-              <ArrowLeft className="w-4 h-4 mr-1.5" /> Return to Login Portal
+              Sign In as Administrator
+            </button>
+          </form>
+
+          <div className="pt-2 text-center">
+            <Link href="/" className="text-xs text-slate-400 hover:text-slate-200 inline-flex items-center">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Main Portal Choice
             </Link>
           </div>
+
         </div>
       </div>
     );
