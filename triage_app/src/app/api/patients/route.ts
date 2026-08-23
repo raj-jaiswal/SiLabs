@@ -5,6 +5,23 @@ import { generateDemographics } from '@/utils/demographics';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
 import { VitalFrame, PatientState } from '@/types/patient';
 
+function getDeviceEpoch(dev: any): number {
+  if (dev.last_updated_epoch && typeof dev.last_updated_epoch === 'number') {
+    return dev.last_updated_epoch;
+  }
+  if (dev.last_updated && typeof dev.last_updated === 'string') {
+    try {
+      const parts = dev.last_updated.split(':').map((p: string) => parseInt(p, 10));
+      if (parts.length === 3) {
+        const now = new Date();
+        const devTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], parts[2]);
+        return devTime.getTime() / 1000;
+      }
+    } catch (e) {}
+  }
+  return 0;
+}
+
 export async function GET() {
   try {
     const dataDir = '/home/logan78/Desktop/SiLabs/process_labeled_data';
@@ -101,22 +118,23 @@ export async function GET() {
         const deviceList = Object.values(devices) as any[];
 
         if (deviceList.length > 0) {
-          // Sort devices by last_updated_epoch descending to get the MOST RECENT active streaming device!
-          deviceList.sort((a, b) => (b.last_updated_epoch || 0) - (a.last_updated_epoch || 0));
+          // Sort devices by last_updated_epoch / parse HH:MM:SS descending to select the MOST RECENT active ESP32 device!
+          deviceList.sort((a, b) => getDeviceEpoch(b) - getDeviceEpoch(a));
           const activeDev = deviceList[0];
 
           if (activeDev) {
             if (Array.isArray(activeDev.scores) && activeDev.scores.length > 0) {
               esp32Scores = activeDev.scores;
             }
-            if (activeDev.last_updated_epoch) {
-              const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - activeDev.last_updated_epoch));
+            const devEpoch = getDeviceEpoch(activeDev);
+            if (devEpoch > 0) {
+              const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - devEpoch));
               lastUpdateSecAgo = elapsed;
               if (elapsed >= 20) {
                 isStale = true;
               }
             } else {
-              isStale = true;
+              isStale = false; // Fallback to live if device exists
             }
           } else {
             isStale = true;

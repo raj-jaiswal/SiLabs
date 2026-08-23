@@ -32,31 +32,11 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // 1. Fetch patient data from API on mount
+  // 1. Master Stride Counter (Updates strideCount every second, value changes every 5 seconds)
   useEffect(() => {
-    async function loadPatients() {
-      try {
-        const res = await fetch('/api/patients');
-        const data = await res.json();
-        if (data.error) {
-          setError(data.error);
-        } else if (data.patients) {
-          setPatients(data.patients);
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load patient telemetry');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadPatients();
-  }, []);
+    if (!currentUser) return;
 
-  // 2. Master Synchronized 5-Second Stride Clock Loop with Dynamic Re-Sync Listener
-  useEffect(() => {
-    if (patients.length === 0 || !currentUser) return;
-
-    const syncTelemetry = () => {
+    const updateStride = () => {
       let masterStartTime = localStorage.getItem('silabs_master_start_time');
       if (!masterStartTime) {
         masterStartTime = String(Date.now());
@@ -66,46 +46,64 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
       const elapsedMs = Math.max(0, Date.now() - startTimeNum);
       const currentStride = Math.floor(elapsedMs / 5000) + 1;
       setStrideCount(currentStride);
-
-      setPatients(prevPatients =>
-        prevPatients.map(patient => {
-          if (!patient.vitalsHistory || patient.vitalsHistory.length === 0) return patient;
-          const targetIndex = (currentStride - 1) % patient.vitalsHistory.length;
-          const currentFrame = patient.vitalsHistory[targetIndex];
-          const riskEval = evaluatePatientRisk(patient.vitalsHistory, targetIndex);
-
-          return {
-            ...patient,
-            currentFrameIndex: targetIndex,
-            currentFrame,
-            hypotension: riskEval.hypotension,
-            hypoxia: riskEval.hypoxia,
-            tachycardia: riskEval.tachycardia,
-            triageRank: riskEval.triageRank,
-            activeEventCount: riskEval.activeEventCount,
-          };
-        })
-      );
     };
 
-    syncTelemetry();
-    const interval = setInterval(syncTelemetry, 1000);
+    updateStride();
+    const interval = setInterval(updateStride, 1000);
 
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === 'silabs_master_start_time') {
-        syncTelemetry();
+        updateStride();
       }
     };
 
     window.addEventListener('storage', handleStorageEvent);
-    window.addEventListener('silabs_resync', syncTelemetry);
+    window.addEventListener('silabs_resync', updateStride);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageEvent);
-      window.removeEventListener('silabs_resync', syncTelemetry);
+      window.removeEventListener('silabs_resync', updateStride);
     };
-  }, [patients.length, currentUser]);
+  }, [currentUser]);
+
+  // 2. Strict 5-Second Telemetry Sync (Triggers ONLY when strideCount changes every 5 seconds)
+  useEffect(() => {
+    if (strideCount === 0 || !currentUser) return;
+
+    async function syncTelemetry5s() {
+      try {
+        const res = await fetch('/api/patients');
+        const data = await res.json();
+        if (data.patients) {
+          const updated = data.patients.map((patient: PatientState) => {
+            if (!patient.vitalsHistory || patient.vitalsHistory.length === 0) return patient;
+            const targetIndex = (strideCount - 1) % patient.vitalsHistory.length;
+            const currentFrame = patient.vitalsHistory[targetIndex];
+            const riskEval = evaluatePatientRisk(patient.vitalsHistory, targetIndex);
+
+            return {
+              ...patient,
+              currentFrameIndex: targetIndex,
+              currentFrame,
+              hypotension: patient.isEsp32Live ? patient.hypotension : riskEval.hypotension,
+              hypoxia: patient.isEsp32Live ? patient.hypoxia : riskEval.hypoxia,
+              tachycardia: patient.isEsp32Live ? patient.tachycardia : riskEval.tachycardia,
+              triageRank: riskEval.triageRank,
+              activeEventCount: riskEval.activeEventCount,
+            };
+          });
+          setPatients(updated);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load patient telemetry');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    syncTelemetry5s();
+  }, [strideCount, currentUser]);
 
   const handleStaffLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
