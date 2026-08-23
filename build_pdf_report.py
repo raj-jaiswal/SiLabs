@@ -40,13 +40,13 @@ doc = SimpleDocTemplate(
 
 styles = getSampleStyleSheet()
 
-# Large, Bold, Easily Readable Typography (User Requested Big Fonts)
+# Large, Bold, High-Contrast Typography (Increased Font Sizes)
 title_style = ParagraphStyle(
     'DocTitle',
     parent=styles['Heading1'],
     fontName='Helvetica-Bold',
-    fontSize=20,
-    leading=24,
+    fontSize=21,
+    leading=25,
     textColor=colors.HexColor('#0F172A'),
     spaceAfter=4
 )
@@ -55,8 +55,8 @@ subtitle_style = ParagraphStyle(
     'DocSubTitle',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=11,
-    leading=14.5,
+    fontSize=11.5,
+    leading=15,
     textColor=colors.HexColor('#CC0000'),
     spaceAfter=8
 )
@@ -65,8 +65,8 @@ sec_h1_style = ParagraphStyle(
     'SectionH1Header',
     parent=styles['Heading1'],
     fontName='Helvetica-Bold',
-    fontSize=12.5,
-    leading=16,
+    fontSize=13,
+    leading=16.5,
     textColor=colors.HexColor('#0F172A'),
     spaceBefore=0,
     spaceAfter=0,
@@ -77,8 +77,8 @@ sec_h2_style = ParagraphStyle(
     'SectionH2Header',
     parent=styles['Heading2'],
     fontName='Helvetica-Bold',
-    fontSize=11,
-    leading=14.5,
+    fontSize=11.5,
+    leading=15,
     textColor=colors.HexColor('#CC0000'),
     spaceBefore=6,
     spaceAfter=4,
@@ -89,8 +89,8 @@ body_style = ParagraphStyle(
     'BodyTextCustom',
     parent=styles['Normal'],
     fontName='Helvetica',
-    fontSize=9.5,
-    leading=13.5,
+    fontSize=10,
+    leading=14,
     textColor=colors.HexColor('#334155'),
     spaceAfter=6
 )
@@ -99,8 +99,8 @@ body_bold = ParagraphStyle(
     'BodyBoldCustom',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=9.5,
-    leading=13.5,
+    fontSize=10,
+    leading=14,
     textColor=colors.HexColor('#0F172A')
 )
 
@@ -108,8 +108,8 @@ mono_style = ParagraphStyle(
     'MonoCustom',
     parent=styles['Normal'],
     fontName='Courier-Bold',
-    fontSize=8.5,
-    leading=11,
+    fontSize=9,
+    leading=11.5,
     textColor=colors.HexColor('#0F172A')
 )
 
@@ -127,12 +127,12 @@ def make_section_banner(title_text):
 story = []
 
 # =========================================================================
-# PAGE 1: Front Page Header, Executive Summary & Preprocessing Chart 1
+# PAGE 1: Front Page Header, Executive Summary & Preprocessing Chart 1 (HUGE IMAGE & FONTS)
 # =========================================================================
 header_data = [
     [
-        RLImage(logo_path, width=1.8*inch, height=0.48*inch) if os.path.exists(logo_path) else Paragraph("<b>SILICON LABS</b>", title_style),
-        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=7.5 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V8</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
+        RLImage(logo_path, width=1.9*inch, height=0.5*inch) if os.path.exists(logo_path) else Paragraph("<b>SILICON LABS</b>", title_style),
+        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=8 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V9</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
     ]
 ]
 header_table = Table(header_data, colWidths=[3.5*inch, 3.8*inch])
@@ -164,9 +164,10 @@ story.append(Spacer(1, 4))
 
 story.append(Paragraph("1.1 Raw vs Cleaned Biosignal Waveforms &amp; Hemodynamic Hierarchy", sec_h2_style))
 
+# ENLARGED FRONT PAGE IMAGE (7.3 inches wide x 4.0 inches tall)
 if os.path.exists(prep_raw_clean_img):
-    story.append(RLImage(prep_raw_clean_img, width=7.2*inch, height=3.4*inch))
-    story.append(Paragraph("<b>Figure 1:</b> Biosignal Preprocessing Pipeline — Raw Sensor Artifact Rejection &amp; Hemodynamic Hierarchy Enforcement (data_preprocessing.ipynb)", ParagraphStyle('CapP1', parent=body_style, fontSize=8, alignment=1)))
+    story.append(RLImage(prep_raw_clean_img, width=7.3*inch, height=4.0*inch))
+    story.append(Paragraph("<b>Figure 1:</b> Biosignal Preprocessing Pipeline — Raw Sensor Artifact Rejection &amp; Hemodynamic Hierarchy Enforcement (data_preprocessing.ipynb)", ParagraphStyle('CapP1', parent=body_style, fontSize=8.5, alignment=1)))
     story.append(Spacer(1, 4))
 
 prep_chart1_explanation = """
@@ -185,8 +186,8 @@ story.append(PageBreak())
 story.append(Paragraph("1.2 Perioperative Adverse Event Cohort Distributions", sec_h2_style))
 
 if os.path.exists(prep_dist_img):
-    story.append(RLImage(prep_dist_img, width=7.2*inch, height=2.4*inch))
-    story.append(Paragraph("<b>Figure 2:</b> Cohort Risk Distributions across 3,765 Perioperative Patients (% Time in Hypotension, Tachycardia &amp; Hypoxia)", ParagraphStyle('CapP2', parent=body_style, fontSize=8, alignment=1)))
+    story.append(RLImage(prep_dist_img, width=7.3*inch, height=2.6*inch))
+    story.append(Paragraph("<b>Figure 2:</b> Cohort Risk Distributions across 3,765 Perioperative Patients (% Time in Hypotension, Tachycardia &amp; Hypoxia)", ParagraphStyle('CapP2', parent=body_style, fontSize=8.5, alignment=1)))
     story.append(Spacer(1, 4))
 
 prep_chart2_explanation = """
@@ -205,7 +206,7 @@ story.append(make_section_banner("2.0 BASE 1D-CNN MODEL ARCHITECTURE &amp; CONFU
 story.append(Spacer(1, 4))
 
 cnn_desc = """
-The first tier of our predictive engine consists of specialized <b>1D-Convolutional Neural Networks (1D-CNNs)</b> trained directly on 1Hz temporal biosignal streams. These models capture high-frequency morphological waveform patterns for Hypotension, Hypoxia, and Tachycardia. Below are the raw base 1D-CNN confusion matrices evaluated on <b>7,549,582 test frames</b>:
+The first tier of our predictive engine consists of specialized <b>1D-Convolutional Neural Networks (1D-CNNs)</b> trained directly on 1Hz temporal biosignal streams. Below are the raw base 1D-CNN confusion matrices evaluated on <b>7,549,582 test frames</b>:
 """
 story.append(Paragraph(cnn_desc, body_style))
 
@@ -236,7 +237,7 @@ story.append(Paragraph("Base 1D-CNN Hypoxia Confusion Matrix", sec_h2_style))
 
 cnn_hypox_table_data = [
     [RLImage(cnn_hypox_img, width=3.6*inch, height=2.5*inch)],
-    [Paragraph("<b>Figure 5:</b> Base 1D-CNN Hypoxia Confusion Matrix (N=7,549,582 Evaluation Frames)", ParagraphStyle('Cap5', parent=body_style, fontSize=8, alignment=1))]
+    [Paragraph("<b>Figure 5:</b> Base 1D-CNN Hypoxia Confusion Matrix (N=7,549,582 Evaluation Frames)", ParagraphStyle('Cap5', parent=body_style, fontSize=8.5, alignment=1))]
 ]
 t_hypox_cnn = Table(cnn_hypox_table_data, colWidths=[7.3*inch])
 t_hypox_cnn.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('PADDING', (0,0), (-1,-1), 1)]))
@@ -279,7 +280,7 @@ story.append(Paragraph("Tree + CNN Tachycardia Ensemble Confusion Matrix", sec_h
 
 tree_tachy_table_data = [
     [RLImage(tree_tachy_img, width=3.6*inch, height=2.5*inch)],
-    [Paragraph("<b>Figure 8:</b> Tree + CNN Tachycardia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap8', parent=body_style, fontSize=8, alignment=1))]
+    [Paragraph("<b>Figure 8:</b> Tree + CNN Tachycardia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap8', parent=body_style, fontSize=8.5, alignment=1))]
 ]
 t_tachy_tree = Table(tree_tachy_table_data, colWidths=[7.3*inch])
 t_tachy_tree.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('PADDING', (0,0), (-1,-1), 1)]))
@@ -357,8 +358,8 @@ story.append(Spacer(1, 8))
 
 story.append(Paragraph("Multi-Event AUROC Curves Summary", sec_h2_style))
 if os.path.exists(roc_img):
-    story.append(RLImage(roc_img, width=4.6*inch, height=2.9*inch))
-    story.append(Paragraph("<b>Figure 9:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia (All &gt; 80%)", ParagraphStyle('Cap9', parent=body_style, fontSize=8, alignment=1)))
+    story.append(RLImage(roc_img, width=4.8*inch, height=3.0*inch))
+    story.append(Paragraph("<b>Figure 9:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia (All &gt; 80%)", ParagraphStyle('Cap9', parent=body_style, fontSize=8.5, alignment=1)))
 
 story.append(Spacer(1, 10))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E2E8F0'), spaceBefore=4, spaceAfter=6))
