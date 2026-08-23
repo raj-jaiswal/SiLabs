@@ -193,6 +193,26 @@ export default function AdminPage() {
         <span>Master Control &amp; Dispatch Active</span>
       </div>
 
+      {/* Logged-In Administrator Identity Banner */}
+      <div className="bg-rose-950/90 border-b border-rose-800/80 px-6 py-2.5 flex items-center justify-between shadow-inner">
+        <div className="flex items-center space-x-3 text-xs">
+          <div className="p-1.5 bg-rose-900/90 rounded-lg border border-rose-700 text-rose-300 font-bold animate-pulse">
+            <Shield className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-slate-400 text-xs uppercase font-semibold mr-1.5">Active Admin Account:</span>
+            <span className="font-black text-rose-200 text-sm tracking-wide bg-rose-900/60 px-2.5 py-1 rounded-md border border-rose-700">
+              {currentUser.name} (SYSTEM ADMINISTRATOR)
+            </span>
+            <span className="text-slate-400 font-mono text-xs ml-2">({currentUser.email})</span>
+          </div>
+        </div>
+        <div className="text-xs text-rose-300 font-bold bg-rose-900/60 px-2.5 py-1 rounded border border-rose-700 flex items-center space-x-1.5">
+          <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+          <span>ADMIN MASTER CONTROL ACTIVE</span>
+        </div>
+      </div>
+
       <Header
         patients={patients}
         strideCount={strideCount}

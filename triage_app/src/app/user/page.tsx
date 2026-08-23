@@ -240,6 +240,26 @@ export default function UserPage() {
         <span>Telemetry Monitoring &amp; Patient Dispatch Alerts Active</span>
       </div>
 
+      {/* Logged-In Staff User Identity Banner */}
+      <div className="bg-sky-950/90 border-b border-sky-800/80 px-6 py-2.5 flex items-center justify-between shadow-inner">
+        <div className="flex items-center space-x-3 text-xs">
+          <div className="p-1.5 bg-sky-900/90 rounded-lg border border-sky-700 text-sky-300 font-bold animate-pulse">
+            <User className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-slate-400 text-xs uppercase font-semibold mr-1.5">Active Staff User:</span>
+            <span className="font-black text-sky-200 text-sm tracking-wide bg-sky-900/60 px-2.5 py-1 rounded-md border border-sky-700">
+              {currentUser.name}
+            </span>
+            <span className="text-slate-400 font-mono text-xs ml-2">({currentUser.email})</span>
+          </div>
+        </div>
+        <div className="text-xs text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-800 flex items-center space-x-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>CONNECTED AS {currentUser.name.toUpperCase()}</span>
+        </div>
+      </div>
+
       <Header
         patients={patients}
         strideCount={strideCount}
