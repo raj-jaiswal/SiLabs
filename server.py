@@ -28,7 +28,25 @@ MAX_HISTORY_LENGTH = 10
 
 # Thread-safe in-memory device registry
 devices_lock = threading.Lock()
-DEVICES = {}
+now_init = datetime.datetime.now().strftime("%H:%M:%S")
+now_init_epoch = time.time()
+DEVICES = {
+    "PATIENT-000": {
+        "device_id": "PATIENT-000",
+        "prediction_str": "Hypotension: 0.8850 | Hypoxia: 0.9420 | Tachycardia: 0.1200",
+        "pred_raw": "",
+        "scores": [0.885, 0.942, 0.12],
+        "update_count": 1,
+        "last_updated": now_init,
+        "last_updated_epoch": now_init_epoch,
+        "ip_address": "127.0.0.1",
+        "history": [{
+            "timestamp": now_init,
+            "pred": "Hypotension: 0.8850 | Hypoxia: 0.9420 | Tachycardia: 0.1200",
+            "scores": [0.885, 0.942, 0.12]
+        }]
+    }
+}
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -668,6 +686,21 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Maintain maximum N historical items (configurable via MAX_HISTORY_LENGTH)
                 if len(DEVICES[device_id]["history"]) > MAX_HISTORY_LENGTH:
                     DEVICES[device_id]["history"] = DEVICES[device_id]["history"][-MAX_HISTORY_LENGTH:]
+
+                # Also mirror telemetry to PATIENT-000 so device 000 is always updated
+                if "PATIENT-000" in DEVICES and device_id != "PATIENT-000":
+                    DEVICES["PATIENT-000"]["prediction_str"] = pred_val
+                    DEVICES["PATIENT-000"]["pred_raw"] = pred_raw
+                    DEVICES["PATIENT-000"]["scores"] = scores
+                    DEVICES["PATIENT-000"]["update_count"] += 1
+                    DEVICES["PATIENT-000"]["last_updated"] = now_str
+                    DEVICES["PATIENT-000"]["last_updated_epoch"] = now_epoch
+                    DEVICES["PATIENT-000"]["ip_address"] = self.client_address[0]
+                    if "history" not in DEVICES["PATIENT-000"]:
+                        DEVICES["PATIENT-000"]["history"] = []
+                    DEVICES["PATIENT-000"]["history"].append(history_sample)
+                    if len(DEVICES["PATIENT-000"]["history"]) > MAX_HISTORY_LENGTH:
+                        DEVICES["PATIENT-000"]["history"] = DEVICES["PATIENT-000"]["history"][-MAX_HISTORY_LENGTH:]
 
                 count = DEVICES[device_id]["update_count"]
 
