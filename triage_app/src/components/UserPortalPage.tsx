@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
@@ -19,6 +20,7 @@ interface UserPortalPageProps {
 
 export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'user1' }) => {
   const { currentUser, users, login } = useAuth();
+  const router = useRouter();
   const [patients, setPatients] = useState<PatientState[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [strideCount, setStrideCount] = useState<number>(0);
@@ -26,7 +28,7 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
 
-  // Find target staff user from slug (e.g., 'user1' => 'User 1')
+  // Filter staff users (non-admin)
   const staffUsers = users.filter(u => u.role !== 'ADMIN');
   
   // Match slug to user (e.g. user1 -> User 1, user2 -> User 2)
@@ -36,8 +38,16 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
     return (slugNum && userNum && slugNum === userNum) || u.email.toLowerCase().includes(targetSlug.toLowerCase());
   }) || staffUsers[0];
 
+  const [selectedStaffUser, setSelectedStaffUser] = useState<UserAccount | null>(matchedUser || staffUsers[0]);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Update selected staff user when targetSlug changes
+  useEffect(() => {
+    if (matchedUser) {
+      setSelectedStaffUser(matchedUser);
+    }
+  }, [targetSlug]);
 
   // 1. Fetch patient data from API on mount
   useEffect(() => {
@@ -103,12 +113,15 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
 
   const handleStaffLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!matchedUser) return;
-    if (login(matchedUser.email, passwordInput)) {
+    if (!selectedStaffUser) return;
+    if (login(selectedStaffUser.email, passwordInput)) {
       setLoginError('');
       setPasswordInput('');
+      const userNum = selectedStaffUser.name.replace(/\D/g, '');
+      const userSlug = userNum ? `user${userNum}` : 'user1';
+      router.push(`/${userSlug}`);
     } else {
-      setLoginError(`Incorrect password for ${matchedUser.name}.`);
+      setLoginError(`Incorrect password for ${selectedStaffUser.name}.`);
     }
   };
 
@@ -118,67 +131,102 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
 
   const criticalPatients = patients.filter(p => p.triageRank === 'P1_CRITICAL');
 
-  // Gated Auth: If not logged in, prompt for password for this specific user route
+  // Gated Auth: If not logged in, prompt to select staff user (User 1, User 2, User 3, User 4) & enter password
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-md bg-slate-900 border border-sky-950 rounded-2xl p-8 shadow-2xl space-y-6">
+        <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-6">
           
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 bg-sky-950/80 rounded-xl border border-sky-800 text-sky-300 mb-1">
-              <User className="w-7 h-7" />
+            <div className="inline-flex p-3 bg-slate-800 rounded-xl border border-slate-700 text-sky-400 mb-1">
+              <HeartPulse className="w-7 h-7 animate-pulse text-sky-400" />
             </div>
             <h1 className="text-xl font-bold tracking-tight uppercase text-slate-100">
-              {matchedUser.name} Portal Login (`/{targetSlug}`)
+              Staff Portal (`/{targetSlug}`)
             </h1>
-            <p className="text-xs text-slate-400">Enter password for {matchedUser.name} ({matchedUser.email})</p>
+            <p className="text-xs text-slate-400">Select User 1, User 2, User 3, or User 4 &amp; enter password</p>
           </div>
 
-          <div className="p-3.5 bg-sky-950/60 border border-sky-800 rounded-xl flex items-center space-x-3 text-xs">
-            <div className="p-2.5 bg-sky-900 rounded-lg border border-sky-700 text-sky-300">
-              <Mail className="w-4.5 h-4.5" />
+          {/* Account Selection Grid */}
+          <div className="space-y-3 pt-1">
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              Select Account:
             </div>
-            <div>
-              <div className="font-bold text-sky-200 text-sm">{matchedUser.name} Account</div>
-              <div className="text-[11px] text-sky-400">{matchedUser.email}</div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {staffUsers.map((user) => {
+                const uNum = user.name.replace(/\D/g, '');
+                const uSlug = uNum ? `user${uNum}` : 'user1';
+                const isSelected = selectedStaffUser?.id === user.id;
+
+                return (
+                  <button
+                    key={user.id}
+                    onClick={() => { setSelectedStaffUser(user); setLoginError(''); setPasswordInput(''); }}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? 'bg-sky-950 border-sky-500 text-sky-200 ring-2 ring-sky-500/40'
+                        : 'bg-slate-950/80 hover:bg-slate-800 border-slate-800 text-slate-300'
+                    }`}
+                  >
+                    <div className="font-bold text-xs">{user.name} (`/{uSlug}`)</div>
+                    <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <form onSubmit={handleStaffLoginSubmit} className="space-y-4 text-xs">
-            {loginError && (
-              <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400" />
-                <span>{loginError}</span>
+          {/* Password Prompt Form */}
+          {selectedStaffUser && (
+            <div className="space-y-4 pt-2 border-t border-slate-800">
+              <div className="p-3 bg-sky-950/60 border border-sky-800 rounded-xl flex items-center space-x-3">
+                <div className="p-2 bg-sky-900 rounded-lg border border-sky-700 text-sky-300">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-sky-200 text-sm">{selectedStaffUser.name}</div>
+                  <div className="text-[11px] text-sky-400">{selectedStaffUser.email}</div>
+                </div>
               </div>
-            )}
 
-            <div>
-              <label className="block text-slate-300 font-medium mb-1.5">
-                Password for {matchedUser.name}
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                <input
-                  type="password"
-                  required
-                  autoFocus
-                  value={passwordInput}
-                  onChange={e => { setPasswordInput(e.target.value); setLoginError(''); }}
-                  placeholder={`Enter password (e.g. ${matchedUser.password})`}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
-                />
-              </div>
+              <form onSubmit={handleStaffLoginSubmit} className="space-y-4 text-xs">
+                {loginError && (
+                  <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
+                    <ShieldAlert className="w-4 h-4 text-rose-400" />
+                    <span>{loginError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-slate-300 font-medium mb-1.5">
+                    Password for {selectedStaffUser.name}
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="password"
+                      required
+                      autoFocus
+                      value={passwordInput}
+                      onChange={e => { setPasswordInput(e.target.value); setLoginError(''); }}
+                      placeholder="Enter password"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-sky-950"
+                >
+                  Sign In to /{selectedStaffUser.name.toLowerCase().replace(/\s+/g, '')}
+                </button>
+              </form>
             </div>
+          )}
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-sky-950"
-            >
-              Sign In as {matchedUser.name}
-            </button>
-          </form>
-
-          <div className="pt-2 text-center">
+          <div className="pt-1 text-center">
             <Link href="/" className="text-xs text-slate-400 hover:text-slate-200 inline-flex items-center">
               <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Main Portal Choice
             </Link>
@@ -198,13 +246,15 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
     );
   }
 
+  const currentSlug = `user${currentUser.name.replace(/\D/g, '') || '1'}`;
+
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">
       {/* Route Indicator Bar */}
       <div className="bg-sky-950 text-sky-200 text-xs py-1 px-6 border-b border-sky-900 flex items-center justify-between font-mono">
         <div className="flex items-center space-x-2">
           <User className="w-3.5 h-3.5 text-sky-400" />
-          <span className="font-bold">STAFF USER PORTAL ROUTE: /{targetSlug}</span>
+          <span className="font-bold">STAFF USER PORTAL ROUTE: /{currentSlug}</span>
         </div>
         <span>Telemetry Monitoring &amp; Patient Dispatch Alerts Active</span>
       </div>
@@ -225,7 +275,7 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
         </div>
         <div className="text-xs text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-800 flex items-center space-x-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>CONNECTED AS {currentUser.name.toUpperCase()}</span>
+          <span>CONNECTED AS {currentUser.name.toUpperCase()} ON /{currentSlug}</span>
         </div>
       </div>
 

@@ -15,7 +15,7 @@ interface AuthContextType {
   currentUser: UserAccount | null;
   users: UserAccount[];
   assignments: PatientDispatchAssignment[];
-  login: (email: string, pass: string) => boolean;
+  login: (emailOrUser: string, pass: string) => boolean;
   logout: () => void;
   addUser: (name: string, email: string, pass: string) => boolean;
   dispatchUserToPatient: (targetUserId: string, patientId: string, patientNumber: string, note: string) => void;
@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [assignments, setAssignments] = useState<PatientDispatchAssignment[]>([]);
 
-  // Load state on mount: Users & Assignments from localStorage, Session from sessionStorage
+  // Load state on mount: Users & Assignments from localStorage, NO persistent login session
   useEffect(() => {
     // 1. Users list (shared across tabs)
     const savedUsers = localStorage.getItem('silabs_users');
@@ -39,11 +39,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('silabs_users', JSON.stringify(DEFAULT_USERS));
     }
 
-    // 2. Current User session (isolated per tab)
-    const savedCurUser = sessionStorage.getItem('silabs_current_user') || localStorage.getItem('silabs_current_user');
-    if (savedCurUser) {
-      try { setCurrentUser(JSON.parse(savedCurUser)); } catch (e) {}
-    }
+    // 2. Clear any saved session on mount so password is ALWAYS required on startup/refresh
+    sessionStorage.removeItem('silabs_current_user');
+    localStorage.removeItem('silabs_current_user');
+    setCurrentUser(null);
 
     // 3. Dispatch assignments (shared across tabs)
     const savedAssignments = localStorage.getItem('silabs_assignments');
@@ -65,12 +64,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const login = (email: string, pass: string): boolean => {
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
+  const login = (emailOrUser: string, pass: string): boolean => {
+    const inputClean = emailOrUser.trim().toLowerCase().replace(/\s+/g, '');
+    
+    // Match by email, exact name, or user handle (e.g. 'user1', 'user2', 'user3', 'admin')
+    const found = users.find(u => {
+      const uEmail = u.email.toLowerCase();
+      const uName = u.name.toLowerCase().replace(/\s+/g, '');
+      const uHandle = uEmail.split('@')[0];
+      return (
+        uEmail === inputClean ||
+        uName === inputClean ||
+        uHandle === inputClean ||
+        `user${uName.replace(/\D/g, '')}` === inputClean
+      ) && u.password === pass;
+    });
+
     if (found) {
       setCurrentUser(found);
-      sessionStorage.setItem('silabs_current_user', JSON.stringify(found));
-      localStorage.setItem('silabs_current_user', JSON.stringify(found));
       return true;
     }
     return false;
