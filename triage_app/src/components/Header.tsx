@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Activity, User, LogOut, Shield, RefreshCw } from 'lucide-react';
+import { User, LogOut, Shield, RefreshCw } from 'lucide-react';
 import { PatientState } from '../types/patient';
 import { useAuth } from '@/context/AuthContext';
+import { SiliconLabsLogo } from './SiliconLabsLogo';
 
 interface HeaderProps {
   patients: PatientState[];
@@ -26,17 +27,16 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
   const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-3.5 select-none">
+    <header className="bg-white border-b border-slate-200 px-6 py-3 select-none">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         
-        {/* Title & Live Status Pill */}
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-slate-100 rounded-lg border border-slate-300 text-slate-800">
-            <Activity className="w-5 h-5" />
-          </div>
+        {/* Silicon Labs Logo + Title & Live Status Pill */}
+        <div className="flex items-center space-x-4">
+          <SiliconLabsLogo size="md" />
+          <div className="h-7 w-px bg-slate-200 hidden sm:block" />
           <div>
             <div className="flex items-center space-x-2.5 flex-wrap">
-              <h1 className="text-lg font-bold tracking-tight text-slate-900 uppercase font-sans">
+              <h1 className="text-base font-bold tracking-tight text-slate-900 uppercase font-sans">
                 Clinical Triage Monitor
               </h1>
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 tabular-nums">
@@ -44,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
                 Stride #{strideCount} • {elapsedSec}s ({formattedTime})
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
               SiLabs Intraoperative Adverse Event Predictor • Real-Time Telemetry
             </p>
           </div>
@@ -52,25 +52,25 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
 
         {/* Right Section: Inline Segmented Triage Counts + Admin & User Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Consolidated Segmented Triage Counts (Red, Yellow, Green ONLY) */}
+          {/* Consolidated Segmented Triage Counts (IBM Plex Mono Tabular-Nums) */}
           <div className="inline-flex items-center bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-mono tabular-nums space-x-3">
             <span className="flex items-center space-x-1">
-              <span className="text-slate-600">P1:</span>
+              <span className="text-slate-600 font-sans font-medium">P1:</span>
               <span className={`font-bold ${criticalCount > 0 ? 'text-red-600' : 'text-slate-700'}`}>{criticalCount}</span>
             </span>
             <span className="text-slate-300">|</span>
             <span className="flex items-center space-x-1">
-              <span className="text-slate-600">P2:</span>
+              <span className="text-slate-600 font-sans font-medium">P2:</span>
               <span className={`font-bold ${highCount > 0 ? 'text-amber-600' : 'text-slate-700'}`}>{highCount}</span>
             </span>
             <span className="text-slate-300">|</span>
             <span className="flex items-center space-x-1">
-              <span className="text-slate-600">P3:</span>
+              <span className="text-slate-600 font-sans font-medium">P3:</span>
               <span className="font-bold text-amber-600">{moderateCount}</span>
             </span>
             <span className="text-slate-300">|</span>
             <span className="flex items-center space-x-1">
-              <span className="text-slate-600">P4:</span>
+              <span className="text-slate-600 font-sans font-medium">P4:</span>
               <span className="font-bold text-emerald-600">{stableCount}</span>
             </span>
           </div>
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
             <button
               onClick={onReSyncClock}
               title="Reset master clock stride timer to T=0s"
-              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-mono font-medium transition-colors flex items-center space-x-1.5"
+              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-mono font-medium transition-colors flex items-center space-x-1.5 tabular-nums"
             >
               <RefreshCw className="w-3.5 h-3.5 text-slate-700" />
               <span>Re-Sync (T=0)</span>
@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
           {/* User Session Badge & Controls */}
           {currentUser && (
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs">
+              <div className="flex items-center space-x-2 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-sans">
                 <User className="w-3.5 h-3.5 text-slate-700" />
                 <span className="font-semibold text-slate-900">{currentUser.name}</span>
                 <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold border ${
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
               {currentUser.role === 'ADMIN' && onOpenAdminSidebar && (
                 <button
                   onClick={onOpenAdminSidebar}
-                  className="px-2.5 py-1.5 bg-slate-900 hover:bg-black text-white border border-slate-900 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1"
+                  className="px-2.5 py-1.5 bg-slate-900 hover:bg-black text-white border border-slate-900 rounded-lg text-xs font-semibold transition-colors flex items-center space-x-1 font-sans"
                 >
                   <Shield className="w-3.5 h-3.5 text-red-400" />
                   <span>Admin Panel</span>
