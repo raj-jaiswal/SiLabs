@@ -9,7 +9,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 
 # Paths
-pdf_output = "/home/logan78/Desktop/SiLabs/SiLabs_Solution_Architecture_Report.pdf"
+pdf_output = "/home/logan78/Desktop/SiLabs/trinetra_extra_doc.pdf"
 logo_path = "/home/logan78/Desktop/SiLabs/triage_app/public/silabs-logo.png"
 if not os.path.exists(logo_path):
     logo_path = "/home/logan78/Desktop/SiLabs/image.png"
@@ -132,7 +132,7 @@ story = []
 header_data = [
     [
         RLImage(logo_path, width=1.9*inch, height=0.5*inch) if os.path.exists(logo_path) else Paragraph("<b>SILICON LABS</b>", title_style),
-        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=8 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V14</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
+        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=8 color='#64748B'>DOCUMENT ID: TRINETRA-ICU-2026-V14</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
     ]
 ]
 header_table = Table(header_data, colWidths=[3.5*inch, 3.8*inch])
@@ -143,11 +143,11 @@ header_table.setStyle(TableStyle([
 story.append(header_table)
 story.append(HRFlowable(width="100%", thickness=1.8, color=colors.HexColor('#CC0000'), spaceBefore=2, spaceAfter=4))
 
-story.append(Paragraph("SiLabs Intraoperative Clinical Sentinel Architecture", title_style))
+story.append(Paragraph("Trinetra Intraoperative Clinical Sentinel Architecture", title_style))
 story.append(Paragraph("Data Preprocessing, 1D-CNN Base, Tree + CNN Ensemble &amp; Meta-Neural Network", subtitle_style))
 
 summary_text = """
-<b>EXECUTIVE SUMMARY:</b> This technical architecture report details the end-to-end data processing, predictive modeling, and clinical web dashboard for the Silicon Labs Intraoperative Patient Monitor. Operating at a strict 5-second stride, the system predicts 10-minute future onset of <b>Hypotension (MAP &lt; 65 mmHg)</b>, <b>Hypoxia (SpO2 &lt; 90%)</b>, and <b>Tachycardia (HR &gt; 100 bpm)</b> across <b>3,765 perioperative patient records</b> (VitalDB dataset).
+<b>EXECUTIVE SUMMARY:</b> This technical architecture report details the end-to-end data processing, predictive modeling, and clinical web dashboard for the Trinetra Intraoperative Patient Monitor. Operating at a strict 5-second stride, the system predicts 10-minute future onset of <b>Hypotension (MAP &lt; 65 mmHg)</b>, <b>Hypoxia (SpO2 &lt; 90%)</b>, and <b>Tachycardia (HR &gt; 100 bpm)</b> across <b>3,765 perioperative patient records</b> (VitalDB dataset).
 """
 summary_p = Paragraph(summary_text, body_style)
 summary_table = Table([[summary_p]], colWidths=[7.3*inch])
@@ -382,7 +382,7 @@ if os.path.exists(roc_img):
 
 story.append(Spacer(1, 3))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E2E8F0'), spaceBefore=2, spaceAfter=3))
-story.append(Paragraph("<b>Silicon Labs Clinical Systems Division</b> • Confidential Technical Architecture Report • Generated Automatically", ParagraphStyle('Foot', parent=body_style, fontSize=8, textColor=colors.HexColor('#64748B'), alignment=1)))
+story.append(Paragraph("<b>Trinetra Clinical Systems Division</b> • Confidential Technical Architecture Report • Generated Automatically", ParagraphStyle('Foot', parent=body_style, fontSize=8, textColor=colors.HexColor('#64748B'), alignment=1)))
 
 # Build PDF
 doc.build(story)
