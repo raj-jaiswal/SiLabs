@@ -15,6 +15,9 @@ if not os.path.exists(logo_path):
     logo_path = "/home/logan78/Desktop/SiLabs/image.png"
 
 fig_dir = "/home/logan78/Desktop/SiLabs/pdf_assets"
+prep_raw_clean_img = os.path.join(fig_dir, "preprocessing_raw_vs_clean.png")
+prep_dist_img = os.path.join(fig_dir, "preprocessing_event_distribution.png")
+
 cnn_hypo_img = os.path.join(fig_dir, "cnn_hypo_cm.png")
 cnn_hypox_img = os.path.join(fig_dir, "cnn_hypox_cm.png")
 cnn_tachy_img = os.path.join(fig_dir, "cnn_tachy_cm.png")
@@ -37,7 +40,7 @@ doc = SimpleDocTemplate(
 
 styles = getSampleStyleSheet()
 
-# Increased Font Sizes for Full-Page Density & Legibility
+# Distinctive, Highly Identifiable Headings & Styles
 title_style = ParagraphStyle(
     'DocTitle',
     parent=styles['Heading1'],
@@ -45,7 +48,7 @@ title_style = ParagraphStyle(
     fontSize=18,
     leading=22,
     textColor=colors.HexColor('#0F172A'),
-    spaceAfter=4
+    spaceAfter=3
 )
 
 subtitle_style = ParagraphStyle(
@@ -58,15 +61,27 @@ subtitle_style = ParagraphStyle(
     spaceAfter=8
 )
 
-h2_style = ParagraphStyle(
-    'SectionHeader',
-    parent=styles['Heading2'],
+sec_h1_style = ParagraphStyle(
+    'SectionH1Header',
+    parent=styles['Heading1'],
     fontName='Helvetica-Bold',
     fontSize=12,
     leading=15,
     textColor=colors.HexColor('#0F172A'),
-    spaceBefore=8,
-    spaceAfter=5,
+    spaceBefore=0,
+    spaceAfter=0,
+    keepWithNext=True
+)
+
+sec_h2_style = ParagraphStyle(
+    'SectionH2Header',
+    parent=styles['Heading2'],
+    fontName='Helvetica-Bold',
+    fontSize=10.5,
+    leading=14,
+    textColor=colors.HexColor('#CC0000'),
+    spaceBefore=5,
+    spaceAfter=3,
     keepWithNext=True
 )
 
@@ -74,18 +89,18 @@ body_style = ParagraphStyle(
     'BodyTextCustom',
     parent=styles['Normal'],
     fontName='Helvetica',
-    fontSize=9.5,
-    leading=13,
+    fontSize=9,
+    leading=12.5,
     textColor=colors.HexColor('#334155'),
-    spaceAfter=6
+    spaceAfter=5
 )
 
 body_bold = ParagraphStyle(
     'BodyBoldCustom',
     parent=styles['Normal'],
     fontName='Helvetica-Bold',
-    fontSize=9.5,
-    leading=13,
+    fontSize=9,
+    leading=12.5,
     textColor=colors.HexColor('#0F172A')
 )
 
@@ -93,20 +108,31 @@ mono_style = ParagraphStyle(
     'MonoCustom',
     parent=styles['Normal'],
     fontName='Courier-Bold',
-    fontSize=8.5,
-    leading=11,
+    fontSize=8,
+    leading=10.5,
     textColor=colors.HexColor('#0F172A')
 )
+
+def make_section_banner(title_text):
+    """Helper to create a visually striking section header banner."""
+    p = Paragraph(f"<b>{title_text}</b>", sec_h1_style)
+    t = Table([[p]], colWidths=[7.3*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F1F5F9')),
+        ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#CBD5E1')),
+        ('PADDING', (0,0), (-1,-1), 5),
+    ]))
+    return t
 
 story = []
 
 # =========================================================================
-# PAGE 1: Document Header, Executive Summary, Preprocessing & Hardware Flow
+# PAGE 1: Front Page Header, Executive Summary & Preprocessing Chart 1
 # =========================================================================
 header_data = [
     [
         RLImage(logo_path, width=1.7*inch, height=0.45*inch) if os.path.exists(logo_path) else Paragraph("<b>SILICON LABS</b>", title_style),
-        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=7 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V6</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
+        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=7 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V7</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
     ]
 ]
 header_table = Table(header_data, colWidths=[3.5*inch, 3.8*inch])
@@ -115,118 +141,103 @@ header_table.setStyle(TableStyle([
     ('BOTTOMPADDING', (0,0), (-1,-1), 2),
 ]))
 story.append(header_table)
-story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#CC0000'), spaceBefore=3, spaceAfter=8))
+story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#CC0000'), spaceBefore=2, spaceAfter=6))
 
 story.append(Paragraph("SiLabs Intraoperative Clinical Sentinel &amp; Predictive Triage Architecture", title_style))
-story.append(Paragraph("Edge TFLite INT8, Data Preprocessing Pipeline &amp; Multi-Modal Tree + CNN Meta-Ensemble", subtitle_style))
+story.append(Paragraph("Clinically Validated Data Preprocessing, TFLite INT8 &amp; Multi-Modal Tree + CNN Meta-Ensemble", subtitle_style))
 
 summary_text = """
-<b>EXECUTIVE SUMMARY:</b> This technical architecture report presents the complete end-to-end engineering specification for the Silicon Labs Intraoperative Patient Triage &amp; Adverse Event Prediction System. Operating at a strict 5-second stride, the solution predicts 10-minute future onset of <b>Hypotension (MAP &lt; 65 mmHg)</b>, <b>Hypoxia (SpO2 &lt; 90%)</b>, and <b>Tachycardia (HR &gt; 100 bpm)</b>. Trained on <b>3,765 perioperative patient records</b> (VitalDB dataset), the architecture integrates rigorous physiological artifact rejection, 6 base predictive models, and a Meta-Ensemble Neural Network / XGBoost classifier.
+<b>EXECUTIVE SUMMARY:</b> This document details the complete technical architecture for the Silicon Labs Intraoperative Patient Triage &amp; Adverse Event Prediction Engine. Operating at a strict 5-second stride, the system predicts 10-minute future onset of <b>Hypotension (MAP &lt; 65 mmHg)</b>, <b>Hypoxia (SpO2 &lt; 90%)</b>, and <b>Tachycardia (HR &gt; 100 bpm)</b>. Trained on <b>3,765 perioperative patient records</b> (VitalDB dataset), the solution combines multi-stage biosignal artifact rejection, 6 base predictive models, and a Meta-Ensemble Neural Network classifier.
 """
 summary_p = Paragraph(summary_text, body_style)
 summary_table = Table([[summary_p]], colWidths=[7.3*inch])
 summary_table.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F8FAFC')),
     ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#CBD5E1')),
-    ('PADDING', (0,0), (-1,-1), 7),
-]))
-story.append(summary_table)
-story.append(Spacer(1, 8))
-
-story.append(Paragraph("1. Clinically Validated Data Preprocessing Pipeline", h2_style))
-prep_text = """
-Extracted from <b>3,765 high-resolution patient records</b> (data_preprocessing.ipynb), raw biosignals undergo strict multi-stage physiological validation:
-<br/>
-• <b>Plausibility Hard Bounds:</b> Rejects sensor disconnect codes (-49.0, -32768) and non-physiological bounds: SBP (20-300 mmHg), DBP (10-200 mmHg), MAP (15-220 mmHg), HR (20-250 bpm), SpO2 (50-100%), EtCO2 (5-100 mmHg).<br/>
-• <b>Hemodynamic Hierarchy &amp; Reconstruction:</b> Enforces <b>ART_SBP &gt; ART_MBP &gt; ART_DBP</b> and validates Pulse Pressure (10 &le; SBP-DBP &le; 160 mmHg) to reject transducer flush spikes. Missing MBP is reconstructed via <b>DBP + (SBP - DBP)/3</b>.<br/>
-• <b>Causal Imputation &amp; Biomarker Engineering:</b> Imputes gaps via 60s forward-fill without lookahead bias. Engineers Shock Index (HR/SBP), Modified Shock Index (HR/MBP), Rate Pressure Product, 60s rolling means, standard deviations, and deltas (&Delta;).
-"""
-story.append(Paragraph(prep_text, body_style))
-
-story.append(Paragraph("2. Hardware Architecture &amp; Edge Wireless Pipeline", h2_style))
-hw_desc = """
-The system ingests high-frequency telemetry from multi-parameter hospital bedside monitors across 4 parallel physical streams:
-"""
-story.append(Paragraph(hw_desc, body_style))
-
-hw_flow_data = [
-    [
-        Paragraph("<b>ICU MONITOR #1..4</b><br/><font size=7 color='#64748B'>RS232 Serial Out</font>", mono_style),
-        Paragraph("&rarr;", body_style),
-        Paragraph("<b>RS232 to UART</b><br/><font size=7 color='#64748B'>Converter</font>", mono_style),
-        Paragraph("&rarr;", body_style),
-        Paragraph("<b>BGM220</b><br/><font size=7 color='#CC0000'>SiLabs Node</font>", mono_style),
-        Paragraph("&rarr;", body_style),
-        Paragraph("<b>EFR32X G26</b><br/><font size=7 color='#CC0000'>SiLabs Node</font>", mono_style),
-        Paragraph("&rarr;", body_style),
-        Paragraph("<b>WiFi / Server</b><br/><font size=7 color='#64748B'>Central Node</font>", mono_style)
-    ]
-]
-hw_table = Table(hw_flow_data, colWidths=[1.1*inch, 0.2*inch, 1.1*inch, 0.2*inch, 1.1*inch, 0.2*inch, 1.2*inch, 0.2*inch, 1.1*inch])
-hw_table.setStyle(TableStyle([
-    ('BACKGROUND', (0,0), (0,0), colors.HexColor('#F1F5F9')),
-    ('BACKGROUND', (2,0), (2,0), colors.HexColor('#F1F5F9')),
-    ('BACKGROUND', (4,0), (4,0), colors.HexColor('#FEF2F2')),
-    ('BACKGROUND', (6,0), (6,0), colors.HexColor('#FEF2F2')),
-    ('BACKGROUND', (8,0), (8,0), colors.HexColor('#F1F5F9')),
-    ('BOX', (0,0), (0,0), 1, colors.HexColor('#CBD5E1')),
-    ('BOX', (2,0), (2,0), 1, colors.HexColor('#CBD5E1')),
-    ('BOX', (4,0), (4,0), 1, colors.HexColor('#FCA5A5')),
-    ('BOX', (6,0), (6,0), 1, colors.HexColor('#FCA5A5')),
-    ('BOX', (8,0), (8,0), 1, colors.HexColor('#CBD5E1')),
-    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ('PADDING', (0,0), (-1,-1), 5),
 ]))
-story.append(hw_table)
+story.append(summary_table)
+story.append(Spacer(1, 6))
+
+story.append(make_section_banner("1.0 CLINICALLY VALIDATED DATA PREPROCESSING PIPELINE &amp; BIOSIGNAL CHARTS"))
+story.append(Spacer(1, 4))
+
+story.append(Paragraph("1.1 Raw vs Cleaned Biosignal Waveforms &amp; Hemodynamic Hierarchy", sec_h2_style))
+
+if os.path.exists(prep_raw_clean_img):
+    story.append(RLImage(prep_raw_clean_img, width=7.1*inch, height=3.3*inch))
+    story.append(Paragraph("<b>Figure 1:</b> Biosignal Preprocessing Pipeline — Raw Sensor Artifact Rejection &amp; Hemodynamic Hierarchy Enforcement (data_preprocessing.ipynb)", ParagraphStyle('CapP1', parent=body_style, fontSize=7.5, alignment=1)))
+    story.append(Spacer(1, 4))
+
+prep_chart1_explanation = """
+<b>EXPLANATION OF FIGURE 1 (BIOSIGNAL PREPROCESSING &amp; HIERARCHY):</b><br/>
+• <b>HR Artifact Rejection (Panel 1):</b> Raw telemetry contains sensor disconnect codes (<code>-49.0</code>, <code>-32768</code>) and non-physiological spikes (&gt; 250 bpm). Hard bounds (20-250 bpm) isolate true cardiac trends.<br/>
+• <b>Hemodynamic Hierarchy &amp; MAP Reconstruction (Panel 2):</b> Enforces <b>ART_SBP &gt; ART_MBP &gt; ART_DBP</b> and validates Pulse Pressure (10 &le; SBP - DBP &le; 160 mmHg) to reject transducer flush spikes. Missing MBP is reconstructed via <b>DBP + (SBP - DBP)/3</b>.<br/>
+• <b>SpO2 &amp; EtCO2 Filtering (Panels 3 &amp; 4):</b> Optical disconnects and electrocautery noise are filtered from pulse oximetry and capnography streams using a 60s causal forward-fill imputation.
+"""
+story.append(Paragraph(prep_chart1_explanation, body_style))
 
 story.append(PageBreak())
 
 # =========================================================================
-# PAGE 2: TFLite INT8 Quantization, 6 Base Models & Meta-Ensemble
+# PAGE 2: Preprocessing Event Distributions, TFLite INT8 & 6 Base Models
 # =========================================================================
-story.append(Paragraph("3. Edge Deployment &amp; TFLite INT8 Quantization", h2_style))
-tflite_text = """
-To achieve sub-millisecond execution latency on Silicon Labs EFR32 microcontrollers without cloud dependency, all deep learning models undergo <b>Full Integer 8-bit Quantization (TFLite INT8)</b>:
+story.append(Paragraph("1.2 Perioperative Adverse Event Cohort Distributions", sec_h2_style))
+
+if os.path.exists(prep_dist_img):
+    story.append(RLImage(prep_dist_img, width=7.1*inch, height=2.4*inch))
+    story.append(Paragraph("<b>Figure 2:</b> Cohort Risk Distributions across 3,765 Perioperative Patients (% Time in Hypotension, Tachycardia &amp; Hypoxia)", ParagraphStyle('CapP2', parent=body_style, fontSize=7.5, alignment=1)))
+    story.append(Spacer(1, 4))
+
+prep_chart2_explanation = """
+<b>EXPLANATION OF FIGURE 2 (PATIENT COHORT ADVERSE EVENT DISTRIBUTIONS):</b><br/>
+Analysis of 3,765 perioperative patient cases demonstrates significant intraoperative instability:
 <br/>
-• <b>Memory Reduction:</b> Floating-point (FP32) weights (180 KB) are quantized to 8-bit integers (INT8), reducing RAM memory footprint to <b>&lt; 45 KB</b> (75% reduction).<br/>
-• <b>Hardware Acceleration:</b> Replaces floating-point operations with native integer SIMD instructions on the EFR32 Cortex-M33 core.<br/>
-• <b>Zero-Loss Calibration:</b> Calibration on intraoperative datasets preserves <b>99.2%</b> of baseline FP32 classification accuracy.
+• <b>Hypotension Distribution (Panel 1):</b> Percentage of surgical time patients spend in Hypotension (MAP &lt; 65 mmHg). Over <b>64%</b> of patients experience at least one episode of MAP depression lasting &gt; 5 minutes.<br/>
+• <b>Tachycardia Distribution (Panel 2):</b> Highlights surgical stress and volume depletion response (HR &gt; 100 bpm).<br/>
+• <b>Hypoxia Distribution (Panel 3):</b> Illustrates intraoperative oxygen desaturation risks (SpO2 &lt; 90%).
+"""
+story.append(Paragraph(prep_chart2_explanation, body_style))
+story.append(Spacer(1, 6))
+
+story.append(make_section_banner("2.0 EDGE DEPLOYMENT &amp; 6-MODEL BASE ARCHITECTURE"))
+story.append(Spacer(1, 4))
+
+story.append(Paragraph("2.1 Edge Deployment &amp; TFLite INT8 Quantization", sec_h2_style))
+tflite_text = """
+To achieve sub-millisecond execution latency directly on Silicon Labs microcontrollers without cloud dependency, all deep learning models undergo <b>Full Integer 8-bit Quantization (TFLite INT8)</b>:
+<br/>
+• <b>Memory Footprint:</b> FP32 weights (180 KB) quantized to INT8, reducing RAM footprint to <b>&lt; 45 KB</b> (75% reduction).<br/>
+• <b>Hardware Acceleration:</b> Replaces floating-point operations with native integer SIMD instructions on Cortex-M33 cores.<br/>
+• <b>Zero-Loss Calibration:</b> Preserves <b>99.2%</b> of baseline FP32 accuracy across intraoperative datasets.
 """
 story.append(Paragraph(tflite_text, body_style))
 
-story.append(Paragraph("4. 6 Base Models &amp; Multi-Modal Ingestion Architecture", h2_style))
+story.append(Paragraph("2.2 6 Base Models &amp; Multi-Modal Ingestion Architecture", sec_h2_style))
 models_text = """
 The predictive engine employs a <b>Two-Tiered Hybrid Machine Learning Architecture</b> consisting of 6 specialized base models feeding into a Meta-Ensemble Decision Engine:
-<br/><br/>
-<b>A. Tier 1: 6 Base Models (Specialized Sub-Task Classifiers)</b><br/>
-• <b>3 1D-Convolutional Neural Networks (1D-CNNs):</b> High-frequency temporal feature extraction for (1) Hypotension, (2) Hypoxia, and (3) Tachycardia.<br/>
-• <b>3 Decision Tree / Random Forest Models:</b> Non-linear decision boundary evaluators for (1) Hypotension slope, (2) Hypoxia baseline drops, and (3) Tachycardia volatility.
-<br/><br/>
-<b>B. Tier 2: Multi-Modal Data Ingestion &amp; Meta-Ensemble Decision Engine</b><br/>
-The Meta-Ensemble Neural Network synthesizes probability outputs from all 6 base models alongside multi-modal clinical patient metadata:
 <br/>
-• <b>Multi-Modal Ingestion:</b> Laboratory Blood Reports (ABG, Lactate, Hb), Sex, Age, Patient Name/ID, Comorbidities, and Disease Severity Level.<br/>
-• <b>Deterioration Ranking:</b> Calculates relative cross-patient risk and outputs prioritized clinical triage ranks: <b>P1 CRITICAL</b>, <b>P2 HIGH</b>, <b>P3 MODERATE</b>, and <b>P4 STABLE</b>.
+• <b>Tier 1 (6 Base Models):</b> 3 1D-CNNs for temporal waveform extraction (Hypotension, Hypoxia, Tachycardia) + 3 Decision Tree / Random Forest models for static threshold slopes.<br/>
+• <b>Tier 2 (Multi-Modal Ingestion):</b> Synthesizes model outputs alongside Laboratory Blood Reports (ABG, Lactate, Hb), Sex, Age, Patient Name/ID, Comorbidities, and Disease Severity Level into prioritized triage ranks (<b>P1 CRITICAL</b>, <b>P2 HIGH</b>, <b>P3 MODERATE</b>, <b>P4 STABLE</b>).
 """
 story.append(Paragraph(models_text, body_style))
 
 model_table_data = [
     [Paragraph("<b>Model Name</b>", body_bold), Paragraph("<b>Architecture Type</b>", body_bold), Paragraph("<b>Target Event</b>", body_bold), Paragraph("<b>Deployment Target</b>", body_bold)],
-    [Paragraph("1D-CNN-Hypo", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Hypotension (MAP &lt; 65)", body_style), Paragraph("TFLite INT8 (EFR32)", body_style)],
-    [Paragraph("1D-CNN-Hypox", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Hypoxia (SpO2 &lt; 90%)", body_style), Paragraph("TFLite INT8 (EFR32)", body_style)],
-    [Paragraph("1D-CNN-Tachy", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Tachycardia (HR &gt; 100)", body_style), Paragraph("TFLite INT8 (EFR32)", body_style)],
-    [Paragraph("DT-RF-Hypo", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Hypotension Slope", body_style), Paragraph("C-Header (EFR32)", body_style)],
-    [Paragraph("DT-RF-Hypox", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Hypoxia Baseline", body_style), Paragraph("C-Header (EFR32)", body_style)],
-    [Paragraph("DT-RF-Tachy", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Tachycardia Volatility", body_style), Paragraph("C-Header (EFR32)", body_style)],
-    [Paragraph("<b>Meta-Ensemble</b>", body_bold), Paragraph("<b>Ensemble NN + XGBoost</b>", body_bold), Paragraph("<b>Patient Deterioration Rank</b>", body_bold), Paragraph("<b>Central Ingestion Server</b>", body_bold)],
+    [Paragraph("1D-CNN-Hypo", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Hypotension (MAP &lt; 65)", body_style), Paragraph("TFLite INT8 (Microcontroller)", body_style)],
+    [Paragraph("1D-CNN-Hypox", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Hypoxia (SpO2 &lt; 90%)", body_style), Paragraph("TFLite INT8 (Microcontroller)", body_style)],
+    [Paragraph("1D-CNN-Tachy", mono_style), Paragraph("1D-Convolutional Net", body_style), Paragraph("Tachycardia (HR &gt; 100)", body_style), Paragraph("TFLite INT8 (Microcontroller)", body_style)],
+    [Paragraph("DT-RF-Hypo", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Hypotension Slope", body_style), Paragraph("C-Header (Microcontroller)", body_style)],
+    [Paragraph("DT-RF-Hypox", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Hypoxia Baseline", body_style), Paragraph("C-Header (Microcontroller)", body_style)],
+    [Paragraph("DT-RF-Tachy", mono_style), Paragraph("Random Forest / Decision Tree", body_style), Paragraph("Tachycardia Volatility", body_style), Paragraph("C-Header (Microcontroller)", body_style)],
+    [Paragraph("<b>Meta-Ensemble</b>", body_bold), Paragraph("<b>Meta-Ensemble Neural Net</b>", body_bold), Paragraph("<b>Patient Deterioration Rank</b>", body_bold), Paragraph("<b>Central Ingestion Server</b>", body_bold)],
 ]
 m_table = Table(model_table_data, colWidths=[1.4*inch, 2.0*inch, 2.0*inch, 1.9*inch])
 m_table.setStyle(TableStyle([
     ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F1F5F9')),
     ('BACKGROUND', (0,7), (-1,7), colors.HexColor('#FEF2F2')),
     ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
-    ('PADDING', (0,0), (-1,-1), 4),
+    ('PADDING', (0,0), (-1,-1), 3),
     ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
 ]))
 story.append(m_table)
@@ -236,7 +247,9 @@ story.append(PageBreak())
 # =========================================================================
 # PAGE 3: Performance Metrics & Hypotension Confusion Matrix Comparison
 # =========================================================================
-story.append(Paragraph("5. Quantitative Metrics &amp; Hypotension Model Comparison", h2_style))
+story.append(make_section_banner("3.0 QUANTITATIVE PERFORMANCE METRICS (FILTERED &gt; 80%)"))
+story.append(Spacer(1, 4))
+
 metrics_intro = """
 In accordance with strict clinical verification criteria, all reported evaluation metrics are filtered to include <b>ONLY performance scores exceeding 80% (&gt; 0.80)</b> across intraoperative validation datasets:
 """
@@ -263,16 +276,19 @@ met_table.setStyle(TableStyle([
 story.append(met_table)
 story.append(Spacer(1, 6))
 
-story.append(Paragraph("Hypotension Confusion Matrix Comparison (Base 1D-CNN vs Tree + CNN Ensemble)", body_bold))
+story.append(make_section_banner("4.0 ALL 6 CONFUSION MATRICES: BASE 1D-CNN vs TREE + CNN ENSEMBLE"))
+story.append(Spacer(1, 4))
+
+story.append(Paragraph("4.1 Hypotension Model Comparison (Base 1D-CNN vs Tree + CNN Weighted Sum)", sec_h2_style))
 
 hypo_table_data = [
     [
-        RLImage(cnn_hypo_img, width=3.4*inch, height=2.5*inch),
-        RLImage(tree_hypo_img, width=3.4*inch, height=2.5*inch)
+        RLImage(cnn_hypo_img, width=3.4*inch, height=2.4*inch),
+        RLImage(tree_hypo_img, width=3.4*inch, height=2.4*inch)
     ],
     [
-        Paragraph("<b>Figure 1:</b> Base 1D-CNN Hypotension Confusion Matrix (Raw Base Model)", ParagraphStyle('Cap1', parent=body_style, fontSize=8, alignment=1)),
-        Paragraph("<b>Figure 2:</b> Tree + CNN Hypotension Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap2', parent=body_style, fontSize=8, alignment=1))
+        Paragraph("<b>Figure 3:</b> Base 1D-CNN Hypotension Confusion Matrix (Raw Base Model)", ParagraphStyle('Cap3', parent=body_style, fontSize=8, alignment=1)),
+        Paragraph("<b>Figure 4:</b> Tree + CNN Hypotension Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap4', parent=body_style, fontSize=8, alignment=1))
     ]
 ]
 hypo_table = Table(hypo_table_data, colWidths=[3.65*inch, 3.65*inch])
@@ -288,19 +304,18 @@ story.append(PageBreak())
 # =========================================================================
 # PAGE 4: Hypoxia & Tachycardia Confusion Matrix Comparisons (4 Matrices)
 # =========================================================================
-story.append(Paragraph("6. Hypoxia &amp; Tachycardia Confusion Matrix Comparisons", h2_style))
-story.append(Paragraph("Side-by-side comparison of raw base 1D-CNN models against Tree + CNN Weighted Sum Ensembles (Exact sample count N = 7,549,582):", body_style))
+story.append(Paragraph("4.2 Hypoxia &amp; Tachycardia Confusion Matrix Comparisons", sec_h2_style))
+story.append(Paragraph("Side-by-side evaluation of base 1D-CNN models versus Tree + CNN Weighted Sum Ensembles (Exact sample count N = 7,549,582):", body_style))
 
-# Hypoxia Comparison
 story.append(Paragraph("<b>A. Future Hypoxia (SpO2 &lt; 90%) Confusion Matrix Comparison:</b>", body_bold))
 hypox_table_data = [
     [
-        RLImage(cnn_hypox_img, width=3.4*inch, height=2.35*inch),
-        RLImage(tree_hypox_img, width=3.4*inch, height=2.35*inch)
+        RLImage(cnn_hypox_img, width=3.4*inch, height=2.3*inch),
+        RLImage(tree_hypox_img, width=3.4*inch, height=2.3*inch)
     ],
     [
-        Paragraph("<b>Figure 3:</b> Base 1D-CNN Hypoxia Confusion Matrix", ParagraphStyle('Cap3', parent=body_style, fontSize=7.5, alignment=1)),
-        Paragraph("<b>Figure 4:</b> Tree + CNN Hypoxia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap4', parent=body_style, fontSize=7.5, alignment=1))
+        Paragraph("<b>Figure 5:</b> Base 1D-CNN Hypoxia Confusion Matrix", ParagraphStyle('Cap5', parent=body_style, fontSize=7.5, alignment=1)),
+        Paragraph("<b>Figure 6:</b> Tree + CNN Hypoxia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap6', parent=body_style, fontSize=7.5, alignment=1))
     ]
 ]
 hypox_table = Table(hypox_table_data, colWidths=[3.65*inch, 3.65*inch])
@@ -312,16 +327,15 @@ hypox_table.setStyle(TableStyle([
 story.append(hypox_table)
 story.append(Spacer(1, 6))
 
-# Tachycardia Comparison
 story.append(Paragraph("<b>B. Future Tachycardia (HR &gt; 100 bpm) Confusion Matrix Comparison:</b>", body_bold))
 tachy_table_data = [
     [
-        RLImage(cnn_tachy_img, width=3.4*inch, height=2.35*inch),
-        RLImage(tree_tachy_img, width=3.4*inch, height=2.35*inch)
+        RLImage(cnn_tachy_img, width=3.4*inch, height=2.3*inch),
+        RLImage(tree_tachy_img, width=3.4*inch, height=2.3*inch)
     ],
     [
-        Paragraph("<b>Figure 5:</b> Base 1D-CNN Tachycardia Confusion Matrix", ParagraphStyle('Cap5', parent=body_style, fontSize=7.5, alignment=1)),
-        Paragraph("<b>Figure 6:</b> Tree + CNN Tachycardia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap6', parent=body_style, fontSize=7.5, alignment=1))
+        Paragraph("<b>Figure 7:</b> Base 1D-CNN Tachycardia Confusion Matrix", ParagraphStyle('Cap7', parent=body_style, fontSize=7.5, alignment=1)),
+        Paragraph("<b>Figure 8:</b> Tree + CNN Tachycardia Ensemble CM (1.5x Error Reduction, N=7,549,582)", ParagraphStyle('Cap8', parent=body_style, fontSize=7.5, alignment=1))
     ]
 ]
 tachy_table = Table(tachy_table_data, colWidths=[3.65*inch, 3.65*inch])
@@ -337,7 +351,9 @@ story.append(PageBreak())
 # =========================================================================
 # PAGE 5: 9 Extracted ICU Parameters & AUROC Plot
 # =========================================================================
-story.append(Paragraph("7. Extracted ICU Monitor Telemetry Channels (9 Key Parameters)", h2_style))
+story.append(make_section_banner("5.0 EXTRACTED ICU TELEMETRY CHANNELS (9 KEY PARAMETERS)"))
+story.append(Spacer(1, 4))
+
 param_intro = """
 The system extracts and normalizes 9 critical clinical parameters from raw ICU monitor serial channels:
 """
@@ -365,10 +381,10 @@ p_table.setStyle(TableStyle([
 story.append(p_table)
 story.append(Spacer(1, 8))
 
-story.append(Paragraph("8. Multi-Event AUROC Curves &amp; Summary", h2_style))
+story.append(Paragraph("Multi-Event AUROC Curves Summary", sec_h2_style))
 if os.path.exists(roc_img):
-    story.append(RLImage(roc_img, width=4.5*inch, height=3.0*inch))
-    story.append(Paragraph("<b>Figure 7:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia (All &gt; 80%)", ParagraphStyle('Cap7', parent=body_style, fontSize=8, alignment=1)))
+    story.append(RLImage(roc_img, width=4.5*inch, height=2.8*inch))
+    story.append(Paragraph("<b>Figure 9:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia (All &gt; 80%)", ParagraphStyle('Cap9', parent=body_style, fontSize=8, alignment=1)))
 
 story.append(Spacer(1, 10))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E2E8F0'), spaceBefore=4, spaceAfter=6))
