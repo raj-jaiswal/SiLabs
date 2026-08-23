@@ -23,17 +23,9 @@
   }
 }
 
-/* Silicon Labs Official Brand Color Utilities */
-.text-silabs-red {
-  color: #CC0000;
-}
-
-.bg-silabs-red {
-  background-color: #CC0000;
-}
-
-.border-silabs-red {
-  border-color: #CC0000;
+/* Sharp Corners Utility */
+* {
+  border-radius: 0px !important;
 }
 
 /* Tabular Numbers Utility for Silicon Labs Telemetry Displays */
@@ -42,7 +34,7 @@
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
-/* Crisp Clean Row Hover Effect */
+/* Sharp Clean Row Hover Effect */
 .table-row-hover {
   transition: background-color 150ms ease-in-out;
 }

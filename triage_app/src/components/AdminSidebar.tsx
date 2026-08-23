@@ -66,16 +66,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 z-40 bg-slate-900/40 transition-opacity"
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white border-l border-slate-200 shadow-2xl flex flex-col font-sans select-none">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white border-l border-slate-300 shadow-xl flex flex-col font-sans select-none">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div className="p-5 border-b border-slate-300 flex items-center justify-between bg-slate-100">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-red-50 rounded-lg border border-red-200 text-red-700">
+            <div className="p-2 bg-red-50 text-red-700 border border-red-200">
               <Shield className="w-5 h-5" />
             </div>
             <div>
@@ -88,7 +88,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:text-slate-900 transition-colors"
+            className="p-1.5 border border-slate-300 bg-white text-slate-700 hover:text-slate-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,10 +98,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
         <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs">
           
           {/* 1. Active User Session Monitor */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <div className="bg-slate-50 border border-slate-300 p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-700 uppercase tracking-wider font-mono">Active Admin Session</span>
-              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 font-mono text-[10px] font-bold">
+              <span className="font-bold text-slate-700 uppercase tracking-wider font-mono">Active Admin Session</span>
+              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 font-mono text-[10px] font-bold">
                 AUTHENTICATED
               </span>
             </div>
@@ -110,25 +110,25 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
           </div>
 
           {/* 2. Dispatch User to Patient */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-300 p-4 space-y-3">
             <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center">
-              <Send className="w-4 h-4 mr-2 text-slate-700" /> Dispatch Staff to Urgent Patient
+              <Send className="w-4 h-4 mr-2 text-slate-800" /> Dispatch Staff to Urgent Patient
             </h3>
 
             {dispatchSuccess && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-center font-semibold">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-center font-bold">
                 {dispatchSuccess}
               </div>
             )}
 
             <form onSubmit={handleDispatchSubmit} className="space-y-3">
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Select Staff Member</label>
+                <label className="block text-slate-700 font-semibold mb-1">Select Staff Member</label>
                 <select
                   required
                   value={targetUserId}
                   onChange={e => setTargetUserId(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900"
+                  className="w-full bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900"
                 >
                   <option value="">Choose User...</option>
                   {staffUsers.map(u => (
@@ -140,12 +140,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Select Target Patient</label>
+                <label className="block text-slate-700 font-semibold mb-1">Select Target Patient</label>
                 <select
                   required
                   value={targetPatientId}
                   onChange={e => setTargetPatientId(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900 font-mono"
+                  className="w-full bg-white border border-slate-300 px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900 font-mono"
                 >
                   <option value="">Choose Patient...</option>
                   {patients.map(p => (
@@ -157,19 +157,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Clinical Instruction Note</label>
+                <label className="block text-slate-700 font-semibold mb-1">Clinical Instruction Note</label>
                 <input
                   type="text"
                   value={dispatchNote}
                   onChange={e => setDispatchNote(e.target.value)}
                   placeholder="e.g. Immediate bedside evaluation required for Hypotension alert"
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                  className="w-full bg-white border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors flex items-center justify-center space-x-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Send Immediate Dispatch Alert</span>
@@ -178,20 +178,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
           </div>
 
           {/* 3. Add New Staff Account */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-300 p-4 space-y-3">
             <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center">
-              <UserPlus className="w-4 h-4 mr-2 text-slate-700" /> Create New Staff User Account
+              <UserPlus className="w-4 h-4 mr-2 text-slate-800" /> Create New Staff User Account
             </h3>
 
             {userSuccess && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-center font-semibold">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-300 text-emerald-800 text-center font-bold">
                 {userSuccess}
               </div>
             )}
 
             <form onSubmit={handleAddUserSubmit} className="space-y-3">
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Staff Name</label>
+                <label className="block text-slate-700 font-semibold mb-1">Staff Name</label>
                 <div className="relative">
                   <User className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -200,13 +200,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newName}
                     onChange={e => setNewName(e.target.value)}
                     placeholder="e.g. Nurse Sarah Jenkins"
-                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                    className="w-full bg-white border border-slate-300 pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Email Address</label>
+                <label className="block text-slate-700 font-semibold mb-1">Email Address</label>
                 <div className="relative">
                   <Mail className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -215,13 +215,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newEmail}
                     onChange={e => setNewEmail(e.target.value)}
                     placeholder="e.g. user4@hospital.com"
-                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 font-mono"
+                    className="w-full bg-white border border-slate-300 pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-700 font-medium mb-1">Assign Password</label>
+                <label className="block text-slate-700 font-semibold mb-1">Assign Password</label>
                 <div className="relative">
                   <Lock className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-3" />
                   <input
@@ -230,23 +230,23 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="Enter password"
-                    className="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                    className="w-full bg-white border border-slate-300 pl-8 pr-3 py-2 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5"
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-bold transition-colors flex items-center justify-center space-x-1.5"
               >
-                <UserPlus className="w-3.5 h-3.5 text-slate-700" />
+                <UserPlus className="w-3.5 h-3.5 text-slate-800" />
                 <span>Register Staff Account</span>
               </button>
             </form>
           </div>
 
           {/* 4. Registered User Accounts Directory */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-300 p-4 space-y-3">
             <h3 className="font-bold text-slate-900 uppercase tracking-wider font-mono">
               Registered Accounts Directory
             </h3>
@@ -257,9 +257,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                   <div key={u.id} className="py-2.5 flex items-center justify-between">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-slate-900">{u.name}</span>
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold uppercase ${
-                          u.role === 'ADMIN' ? 'bg-red-50 text-red-700 border border-red-300' : 'bg-slate-200 text-slate-800 border border-slate-300'
+                        <span className="font-bold text-slate-900">{u.name}</span>
+                        <span className={`text-[9px] px-1.5 py-0.2 font-mono font-bold uppercase ${
+                          u.role === 'ADMIN' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-slate-200 text-slate-800 border border-slate-300'
                         }`}>
                           {u.role}
                         </span>
@@ -268,13 +268,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ patients, isOpen, on
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-white rounded font-mono text-[11px] text-slate-900 border border-slate-300 tabular-nums">
+                      <span className="px-2 py-1 bg-white font-mono text-[11px] text-slate-900 border border-slate-300 tabular-nums">
                         {isShowing ? u.password : '••••••••'}
                       </span>
                       <button
                         onClick={() => toggleShowPassword(u.id)}
                         title={isShowing ? "Hide Password" : "Show Password"}
-                        className="p-1 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-300 rounded transition-colors"
+                        className="p-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors"
                       >
                         {isShowing ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
