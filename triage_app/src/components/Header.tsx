@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HeartPulse, ShieldAlert, AlertTriangle, CheckCircle, User, LogOut, Shield, RefreshCw } from 'lucide-react';
+import { Activity, User, LogOut, Shield, RefreshCw } from 'lucide-react';
 import { PatientState } from '../types/patient';
 import { useAuth } from '@/context/AuthContext';
 
@@ -26,112 +26,102 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
   const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <header className="bg-slate-900 border-b border-slate-800 px-6 py-4">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* Title & Live Status Pill */}
+    <header className="bg-[#131926] border-b border-[#1E2638] px-6 py-3.5 select-none">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        {/* Title & Static Live Status Pill */}
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-slate-800 rounded-lg border border-slate-700 text-sky-400">
-            <HeartPulse className="w-6 h-6 animate-pulse text-sky-400" />
+          <div className="p-2 bg-[#1C2537] rounded-lg border border-[#2A354D] text-sky-400">
+            <Activity className="w-5 h-5 text-sky-400" />
           </div>
           <div>
-            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h1 className="text-xl font-bold tracking-tight text-slate-100 uppercase">
+            <div className="flex items-center space-x-2.5 flex-wrap">
+              <h1 className="text-lg font-bold tracking-tight text-slate-100 uppercase font-sans">
                 Clinical Triage Monitor
               </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                <span className="relative flex h-2 w-2 mr-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                LIVE 5s STRIDE #{strideCount} • {elapsedSec} SECONDS ({formattedTime})
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tabular-nums">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5" />
+                Stride #{strideCount} • {elapsedSec}s ({formattedTime})
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              SiLabs Intraoperative Adverse Event Predictor • Hypotension | Hypoxia | Tachycardia
+              SiLabs Intraoperative Adverse Event Predictor • Real-Time Telemetry
             </p>
           </div>
         </div>
 
-        {/* Right Controls: Summary Badges + User Session & Admin Controls */}
-        <div className="flex flex-wrap items-center gap-3 justify-between lg:justify-end">
-          {/* Triage Summary Badges */}
-          <div className="grid grid-cols-4 gap-2 text-center text-xs">
-            <div className="bg-rose-950/40 border border-rose-900/60 rounded-lg px-2.5 py-1">
-              <div className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider flex items-center justify-center">
-                <ShieldAlert className="w-3 h-3 mr-1" /> P1
-              </div>
-              <div className="text-sm font-bold text-rose-300">{criticalCount}</div>
-            </div>
-
-            <div className="bg-amber-950/40 border border-amber-900/60 rounded-lg px-2.5 py-1">
-              <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-center">
-                <AlertTriangle className="w-3 h-3 mr-1" /> P2
-              </div>
-              <div className="text-sm font-bold text-amber-300">{highCount}</div>
-            </div>
-
-            <div className="bg-yellow-950/30 border border-yellow-900/50 rounded-lg px-2.5 py-1">
-              <div className="text-[10px] font-semibold text-yellow-400 uppercase tracking-wider flex items-center justify-center">
-                P3
-              </div>
-              <div className="text-sm font-bold text-yellow-300">{moderateCount}</div>
-            </div>
-
-            <div className="bg-emerald-950/40 border border-emerald-900/60 rounded-lg px-2.5 py-1">
-              <div className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider flex items-center justify-center">
-                <CheckCircle className="w-3 h-3 mr-1" /> P4
-              </div>
-              <div className="text-sm font-bold text-emerald-300">{stableCount}</div>
-            </div>
+        {/* Right Section: Inline Segmented Triage Counts + Admin & User Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Consolidated Segmented Triage Counts */}
+          <div className="inline-flex items-center bg-[#0B0F17] border border-[#1E2638] rounded-lg px-3 py-1.5 text-xs font-mono tabular-nums space-x-3">
+            <span className="flex items-center space-x-1">
+              <span className="text-slate-400">P1:</span>
+              <span className={`font-bold ${criticalCount > 0 ? 'text-rose-400' : 'text-slate-300'}`}>{criticalCount}</span>
+            </span>
+            <span className="text-[#1E2638]">|</span>
+            <span className="flex items-center space-x-1">
+              <span className="text-slate-400">P2:</span>
+              <span className={`font-bold ${highCount > 0 ? 'text-amber-400' : 'text-slate-300'}`}>{highCount}</span>
+            </span>
+            <span className="text-[#1E2638]">|</span>
+            <span className="flex items-center space-x-1">
+              <span className="text-slate-400">P3:</span>
+              <span className="font-bold text-yellow-400/90">{moderateCount}</span>
+            </span>
+            <span className="text-[#1E2638]">|</span>
+            <span className="flex items-center space-x-1">
+              <span className="text-slate-400">P4:</span>
+              <span className="font-bold text-emerald-400">{stableCount}</span>
+            </span>
           </div>
 
-          {/* User Session & Admin Controls */}
-          {currentUser && (
-            <div className="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
-              <User className="w-3.5 h-3.5 text-sky-400" />
-              <span className="font-semibold text-slate-200">{currentUser.name}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 uppercase font-bold">
-                {currentUser.role}
-              </span>
-            </div>
-          )}
-
-          {currentUser?.role === 'ADMIN' && (
-            <div className="flex items-center space-x-2">
-              {onReSyncClock && (
-                <button
-                  onClick={onReSyncClock}
-                  className="px-3 py-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-200 rounded-lg text-xs font-bold border border-sky-800 flex items-center transition-colors shadow-sm shadow-sky-950"
-                  title="Reset Master Clock to T=0 for all connected users"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-sky-400 animate-spin-slow" /> RE-SYNC CLOCK (T=0)
-                </button>
-              )}
-              {onOpenAdminSidebar && (
-                <button
-                  onClick={onOpenAdminSidebar}
-                  className="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 rounded-lg text-xs font-bold border border-rose-800 flex items-center transition-colors shadow-sm shadow-rose-950"
-                >
-                  <Shield className="w-3.5 h-3.5 mr-1.5 text-rose-400" /> Admin Panel
-                </button>
-              )}
-            </div>
-          )}
-
-          {currentUser && (
+          {/* Admin Re-Sync Clock Button */}
+          {onReSyncClock && (
             <button
-              onClick={logout}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
-              title="Sign Out"
+              onClick={onReSyncClock}
+              title="Reset master clock stride timer to T=0s"
+              className="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-mono font-medium transition-colors flex items-center space-x-1.5"
             >
-              <LogOut className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5 text-rose-400" />
+              <span>Re-Sync (T=0)</span>
             </button>
           )}
+
+          {/* User Session Badge & Controls */}
+          {currentUser && (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-[#0B0F17] border border-[#1E2638] rounded-lg px-2.5 py-1.5 text-xs">
+                <User className="w-3.5 h-3.5 text-sky-400" />
+                <span className="font-medium text-slate-200">{currentUser.name}</span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${
+                  currentUser.role === 'ADMIN' ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' : 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                }`}>
+                  {currentUser.role}
+                </span>
+              </div>
+
+              {currentUser.role === 'ADMIN' && onOpenAdminSidebar && (
+                <button
+                  onClick={onOpenAdminSidebar}
+                  className="px-2.5 py-1.5 bg-[#1C2537] hover:bg-[#253047] border border-[#2A354D] text-slate-200 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1"
+                >
+                  <Shield className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
+
+              <button
+                onClick={logout}
+                title="Sign out"
+                className="p-1.5 bg-[#0B0F17] hover:bg-[#1C2537] border border-[#1E2638] text-slate-400 hover:text-rose-400 rounded-lg transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
+
       </div>
     </header>
   );
 };
-
-export default Header;
-

@@ -20,7 +20,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
-  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(true);
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(false);
 
   // Admin Login State for /admin
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -124,30 +124,30 @@ export default function AdminPage() {
   // Gated Auth: If not logged in as Admin, prompt for Admin password
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-md bg-slate-900 border border-rose-950 rounded-2xl p-8 shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-center p-6 text-slate-100">
+        <div className="w-full max-w-md bg-[#131926] border border-[#1E2638] rounded-xl p-8 shadow-xl space-y-6">
           
-          <div className="text-center space-y-2">
-            <div className="inline-flex p-3 bg-rose-950/80 rounded-xl border border-rose-800 text-rose-300 mb-1">
-              <Shield className="w-7 h-7" />
+          <div className="text-center space-y-2 select-none">
+            <div className="inline-flex p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 text-rose-400 mb-1">
+              <Shield className="w-6 h-6" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight uppercase text-rose-100">Administrator Login</h1>
+            <h1 className="text-lg font-bold tracking-tight uppercase text-slate-100">Administrator Login</h1>
             <p className="text-xs text-slate-400">Enter Admin password to access `/admin` control panel</p>
           </div>
 
-          <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-lg flex items-center space-x-3 text-xs">
-            <div className="p-2 bg-rose-900/60 rounded text-rose-300">
+          <div className="p-3 bg-[#0B0F17] border border-[#1E2638] rounded-lg flex items-center space-x-3 text-xs font-mono">
+            <div className="p-2 bg-[#1C2537] rounded text-slate-300">
               <Mail className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-rose-200">Admin (`admin@hospital.com`)</div>
-              <div className="text-[11px] text-rose-400/80">System Administrator Account</div>
+              <div className="font-semibold text-slate-200">admin@hospital.com</div>
+              <div className="text-[11px] text-slate-400">System Administrator</div>
             </div>
           </div>
 
           <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs">
             {adminLoginError && (
-              <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
                 <ShieldAlert className="w-4 h-4 text-rose-400" />
                 <span>{adminLoginError}</span>
               </div>
@@ -166,14 +166,14 @@ export default function AdminPage() {
                   value={adminPasswordInput}
                   onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
                   placeholder="Enter admin password"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-rose-500"
+                  className="w-full bg-[#0B0F17] border border-[#1E2638] rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-rose-950"
+              className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg transition-colors text-xs"
             >
               Sign In as Administrator
             </button>
@@ -192,44 +192,15 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
-        <div className="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-medium text-slate-400">Initializing Admin Telemetry &amp; Dispatch Console...</p>
+      <div className="min-h-screen bg-[#0B0F17] flex flex-col items-center justify-center text-slate-300">
+        <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs font-mono text-slate-400">Loading Clinical Triage Telemetry...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col">
-      {/* Route Indicator Bar */}
-      <div className="bg-rose-950 text-rose-200 text-xs py-1 px-6 border-b border-rose-900 flex items-center justify-between font-mono">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-3.5 h-3.5 text-rose-400" />
-          <span className="font-bold">ADMIN PORTAL ROUTE: /admin</span>
-        </div>
-        <span>Master Control &amp; Dispatch Active</span>
-      </div>
-
-      {/* Logged-In Administrator Identity Banner */}
-      <div className="bg-rose-950/90 border-b border-rose-800/80 px-6 py-2.5 flex items-center justify-between shadow-inner">
-        <div className="flex items-center space-x-3 text-xs">
-          <div className="p-1.5 bg-rose-900/90 rounded-lg border border-rose-700 text-rose-300 font-bold animate-pulse">
-            <Shield className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-slate-400 text-xs uppercase font-semibold mr-1.5">Active Admin Account:</span>
-            <span className="font-black text-rose-200 text-sm tracking-wide bg-rose-900/60 px-2.5 py-1 rounded-md border border-rose-700">
-              {currentUser.name} (SYSTEM ADMINISTRATOR)
-            </span>
-            <span className="text-slate-400 font-mono text-xs ml-2">({currentUser.email})</span>
-          </div>
-        </div>
-        <div className="text-xs text-rose-300 font-bold bg-rose-900/60 px-2.5 py-1 rounded border border-rose-700 flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
-          <span>ADMIN MASTER CONTROL ACTIVE</span>
-        </div>
-      </div>
-
+    <main className="min-h-screen bg-[#0B0F17] flex flex-col">
       <Header
         patients={patients}
         strideCount={strideCount}

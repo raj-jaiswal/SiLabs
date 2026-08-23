@@ -2,8 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #090d16;
-  color: #f8fafc;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@layer base {
+  body {
+    background-color: #0B0F17;
+    color: #F8FAFC;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+/* Tabular Numbers Utility for Jitter-Free Telemetry Updates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clinical Design System Custom Classes */
+.bg-clinical-canvas {
+  background-color: #0B0F17;
+}
+
+.bg-clinical-card {
+  background-color: #131926;
+}
+
+.border-clinical {
+  border-color: #1E2638;
+}
+
+/* Clean Row Hover Effect */
+.table-row-hover {
+  transition: background-color 150ms ease-in-out;
+}
+.table-row-hover:hover {
+  background-color: #1A2234;
 }
