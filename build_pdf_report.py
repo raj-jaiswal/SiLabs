@@ -160,7 +160,7 @@ story.append(summary_table)
 story.append(Spacer(1, 4))
 
 # =========================================================================
-# 1.0 DATA PREPROCESSING PIPELINE
+# 1.0 DATA PREPROCESSING PIPELINE (FIGURE 1 EXTENDED VERTICALLY)
 # =========================================================================
 story.append(make_section_banner("1.0 CLINICALLY VALIDATED DATA PREPROCESSING PIPELINE &amp; BIOSIGNAL CHARTS"))
 story.append(Spacer(1, 3))
@@ -168,7 +168,8 @@ story.append(Spacer(1, 3))
 story.append(Paragraph("1.1 Biosignal Raw vs Filtered Telemetry Waveforms &amp; Hierarchy Enforcement", sec_h2_style))
 
 if os.path.exists(prep_raw_clean_img):
-    story.append(RLImage(prep_raw_clean_img, width=7.3*inch, height=3.1*inch))
+    # EXTENDED VERTICALLY (height=4.8 inches)
+    story.append(RLImage(prep_raw_clean_img, width=7.3*inch, height=4.8*inch))
     story.append(Paragraph("<b>Figure 1:</b> Biosignal Preprocessing Pipeline — Raw Sensor Artifact Rejection &amp; Hemodynamic Hierarchy Enforcement (data_preprocessing.ipynb)", ParagraphStyle('CapP1', parent=body_style, fontSize=8.5, alignment=1)))
     story.append(Spacer(1, 3))
 
@@ -377,7 +378,7 @@ story.append(Spacer(1, 3))
 story.append(Paragraph("Multi-Event AUROC Curves Summary", sec_h2_style))
 if os.path.exists(roc_img):
     story.append(RLImage(roc_img, width=3.5*inch, height=1.45*inch))
-    story.append(Paragraph("<b>Figure 9:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia", ParagraphStyle('Cap9', parent=body_style, fontSize=8, alignment=1)))
+    story.append(Paragraph("<b>Figure 1:</b> Combined AUROC Curves for Hypotension, Hypoxia &amp; Tachycardia", ParagraphStyle('Cap9', parent=body_style, fontSize=8, alignment=1)))
 
 story.append(Spacer(1, 3))
 story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#E2E8F0'), spaceBefore=2, spaceAfter=3))
