@@ -1,13 +1,19 @@
+'use client';
+
 import React from 'react';
-import { HeartPulse, ShieldAlert, AlertTriangle, CheckCircle } from 'lucide-react';
+import { HeartPulse, ShieldAlert, AlertTriangle, CheckCircle, User, LogOut, Shield } from 'lucide-react';
 import { PatientState } from '../types/patient';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   patients: PatientState[];
   strideCount: number;
+  onOpenAdminSidebar?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
+export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdminSidebar }) => {
+  const { currentUser, logout } = useAuth();
+
   const criticalCount = patients.filter(p => p.triageRank === 'P1_CRITICAL').length;
   const highCount = patients.filter(p => p.triageRank === 'P2_HIGH').length;
   const moderateCount = patients.filter(p => p.triageRank === 'P3_MODERATE').length;
@@ -20,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 px-6 py-4">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         {/* Title & Live Status Pill */}
         <div className="flex items-center space-x-3">
           <div className="p-2.5 bg-slate-800 rounded-lg border border-slate-700 text-sky-400">
@@ -45,35 +51,68 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
           </div>
         </div>
 
-        {/* Triage Summary Badges */}
-        <div className="grid grid-cols-4 gap-3 text-center">
-          <div className="bg-rose-950/40 border border-rose-900/60 rounded-lg px-3 py-1.5">
-            <div className="text-xs font-semibold text-rose-400 uppercase tracking-wider flex items-center justify-center">
-              <ShieldAlert className="w-3.5 h-3.5 mr-1" /> P1 Critical
+        {/* Right Controls: Summary Badges + User Session & Admin Controls */}
+        <div className="flex flex-wrap items-center gap-3 justify-between lg:justify-end">
+          {/* Triage Summary Badges */}
+          <div className="grid grid-cols-4 gap-2 text-center text-xs">
+            <div className="bg-rose-950/40 border border-rose-900/60 rounded-lg px-2.5 py-1">
+              <div className="text-[10px] font-semibold text-rose-400 uppercase tracking-wider flex items-center justify-center">
+                <ShieldAlert className="w-3 h-3 mr-1" /> P1
+              </div>
+              <div className="text-sm font-bold text-rose-300">{criticalCount}</div>
             </div>
-            <div className="text-lg font-bold text-rose-300">{criticalCount}</div>
+
+            <div className="bg-amber-950/40 border border-amber-900/60 rounded-lg px-2.5 py-1">
+              <div className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-center">
+                <AlertTriangle className="w-3 h-3 mr-1" /> P2
+              </div>
+              <div className="text-sm font-bold text-amber-300">{highCount}</div>
+            </div>
+
+            <div className="bg-yellow-950/30 border border-yellow-900/50 rounded-lg px-2.5 py-1">
+              <div className="text-[10px] font-semibold text-yellow-400 uppercase tracking-wider flex items-center justify-center">
+                P3
+              </div>
+              <div className="text-sm font-bold text-yellow-300">{moderateCount}</div>
+            </div>
+
+            <div className="bg-emerald-950/40 border border-emerald-900/60 rounded-lg px-2.5 py-1">
+              <div className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider flex items-center justify-center">
+                <CheckCircle className="w-3 h-3 mr-1" /> P4
+              </div>
+              <div className="text-sm font-bold text-emerald-300">{stableCount}</div>
+            </div>
           </div>
 
-          <div className="bg-amber-950/40 border border-amber-900/60 rounded-lg px-3 py-1.5">
-            <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center justify-center">
-              <AlertTriangle className="w-3.5 h-3.5 mr-1" /> P2 High
+          {/* User Session & Admin Controls */}
+          {currentUser && (
+            <div className="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+              <User className="w-3.5 h-3.5 text-sky-400" />
+              <span className="font-semibold text-slate-200">{currentUser.name}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 uppercase font-bold">
+                {currentUser.role}
+              </span>
             </div>
-            <div className="text-lg font-bold text-amber-300">{highCount}</div>
-          </div>
+          )}
 
-          <div className="bg-yellow-950/30 border border-yellow-900/50 rounded-lg px-3 py-1.5">
-            <div className="text-xs font-semibold text-yellow-400 uppercase tracking-wider flex items-center justify-center">
-              P3 Moderate
-            </div>
-            <div className="text-lg font-bold text-yellow-300">{moderateCount}</div>
-          </div>
+          {currentUser?.role === 'ADMIN' && onOpenAdminSidebar && (
+            <button
+              onClick={onOpenAdminSidebar}
+              className="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 rounded-lg text-xs font-bold border border-rose-800 flex items-center transition-colors shadow-sm shadow-rose-950"
+            >
+              <Shield className="w-3.5 h-3.5 mr-1.5 text-rose-400" /> Admin Panel
+            </button>
+          )}
 
-          <div className="bg-emerald-950/40 border border-emerald-900/60 rounded-lg px-3 py-1.5">
-            <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center justify-center">
-              <CheckCircle className="w-3.5 h-3.5 mr-1" /> P4 Stable
-            </div>
-            <div className="text-lg font-bold text-emerald-300">{stableCount}</div>
-          </div>
+          {currentUser && (
+            <button
+              onClick={logout}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>
@@ -81,3 +120,4 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
 };
 
 export default Header;
+

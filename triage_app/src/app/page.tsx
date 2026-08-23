@@ -5,16 +5,22 @@ import { Header } from '@/components/Header';
 import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
 import { CriticalAlertBar } from '@/components/CriticalAlertBar';
+import { AdminSidebar } from '@/components/AdminSidebar';
+import { LoginPage } from '@/components/LoginPage';
+import { DispatchNotificationModal } from '@/components/DispatchNotificationModal';
+import { useAuth } from '@/context/AuthContext';
 import { PatientState } from '@/types/patient';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
 
 export default function Home() {
+  const { currentUser } = useAuth();
   const [patients, setPatients] = useState<PatientState[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [strideCount, setStrideCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(false);
 
   // 1. Fetch patient data from API on mount
   useEffect(() => {
@@ -38,7 +44,7 @@ export default function Home() {
 
   // 2. Automatic Continuous 5-Second Stride Loop
   useEffect(() => {
-    if (patients.length === 0) return;
+    if (patients.length === 0 || !currentUser) return;
 
     const interval = setInterval(() => {
       setStrideCount(prev => prev + 1);
@@ -65,7 +71,7 @@ export default function Home() {
     }, 5000); // 5-second stride update
 
     return () => clearInterval(interval);
-  }, [patients.length]);
+  }, [patients.length, currentUser]);
 
   // Derived currently selected patient (keeps drawer synced during live strides)
   const selectedPatient = selectedPatientId
@@ -74,6 +80,11 @@ export default function Home() {
 
   // Derived list of P1 Critical patients
   const criticalPatients = patients.filter(p => p.triageRank === 'P1_CRITICAL');
+
+  // Auth Gate: Show LoginPage if not authenticated
+  if (!currentUser) {
+    return <LoginPage />;
+  }
 
   if (loading) {
     return (
@@ -97,7 +108,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">
-      <Header patients={patients} strideCount={strideCount} />
+      <Header
+        patients={patients}
+        strideCount={strideCount}
+        onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
+      />
       
       {!dismissAlertBar && (
         <CriticalAlertBar
@@ -113,10 +128,22 @@ export default function Home() {
           onSelectPatient={(patient) => setSelectedPatientId(patient.profile.id)}
         />
       </div>
+
       <PatientDrawer
         patient={selectedPatient}
         onClose={() => setSelectedPatientId(null)}
       />
+
+      <AdminSidebar
+        patients={patients}
+        isOpen={isAdminSidebarOpen}
+        onClose={() => setIsAdminSidebarOpen(false)}
+      />
+
+      <DispatchNotificationModal
+        onInspectPatient={(patientId) => setSelectedPatientId(patientId)}
+      />
     </main>
   );
 }
+
