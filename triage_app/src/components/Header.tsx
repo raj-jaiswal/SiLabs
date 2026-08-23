@@ -13,6 +13,11 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
   const moderateCount = patients.filter(p => p.triageRank === 'P3_MODERATE').length;
   const stableCount = patients.filter(p => p.triageRank === 'P4_STABLE').length;
 
+  const elapsedSec = strideCount * 5;
+  const mins = Math.floor(elapsedSec / 60);
+  const secs = elapsedSec % 60;
+  const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
   return (
     <header className="bg-slate-900 border-b border-slate-800 px-6 py-4">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -22,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
             <HeartPulse className="w-6 h-6 animate-pulse text-sky-400" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <h1 className="text-xl font-bold tracking-tight text-slate-100 uppercase">
                 Clinical Triage Monitor
               </h1>
@@ -31,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount }) => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                LIVE 5s STRIDE #{strideCount}
+                LIVE 5s STRIDE #{strideCount} • {elapsedSec} SECONDS ({formattedTime})
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">

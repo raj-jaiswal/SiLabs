@@ -99,9 +99,12 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
             <Activity className="w-4 h-4 mr-2 text-sky-400" />
             Priority Triage Queue (Auto-Sorted)
           </h2>
-          <span className="text-xs text-slate-400">
-            Showing {sortedPatients.length} Active Patients
-          </span>
+          <div className="flex items-center space-x-3 text-xs text-slate-400">
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-800 text-sky-400 border border-slate-700 font-mono text-[11px]">
+              5s Stride Interval
+            </span>
+            <span>Showing {sortedPatients.length} Active Patients</span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
