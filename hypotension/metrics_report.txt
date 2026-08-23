@@ -1,0 +1,17 @@
+==================================================
+MODEL PERFORMANCE REPORT: HYPOTENSION PREDICTION
+==================================================
+
+Metrics:
+  - Accuracy  : 0.8225 (82.25%)
+  - Precision : 0.6449 (64.49%)
+  - Recall    : 0.7249 (72.49%)
+  - F1 Score  : 0.6826 (68.26%)
+  - AUROC     : 0.8527 (85.27%)
+
+Confusion Matrix Breakdown:
+  - True Negative  (TN) : 4,768,184
+  - False Positive (FP) : 793,451
+  - False Negative (FN) : 546,807
+  - True Positive  (TP) : 1,441,140
+  - Total Samples      : 7,549,582

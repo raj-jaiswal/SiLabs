@@ -592,6 +592,23 @@ dt_hypox = joblib.load(os.path.join("models", "decision_tree", "dt_Future_Hypoxi
 dt_tachy = joblib.load(os.path.join("models", "decision_tree", "dt_Future_Tachycardia.joblib"))
 c_names = [f.replace("/", "_") for f in window_feature_names]
 
+C_HEADER_PREAMBLE = """// Direct C Decision Tree Inference Engine for Silicon Labs EFR32
+// Supports both class 0 (Normal) and class 1 (Event) percentage outputs at leaf nodes.
+#ifndef DECISION_TREE_TYPES_DEFINED
+#define DECISION_TREE_TYPES_DEFINED
+#include <stdbool.h>
+
+typedef struct {
+    float percent_0;   // Percentage probability for Class 0 (0.0% to 100.0%)
+    float percent_1;   // Percentage probability for Class 1 (0.0% to 100.0%)
+    float prob_0;      // Fractional probability for Class 0 (0.0 to 1.0)
+    float prob_1;      // Fractional probability for Class 1 (0.0 to 1.0)
+    bool prediction;   // Binary decision (true if prob_1 >= tau)
+} DecisionTreeResult;
+#endif
+
+"""
+
 def tree_to_c(tree, feature_names_list, func_name="predict_event_95", tau=0.50):
     tree_ = tree.tree_
     def recurse(node, depth):
@@ -609,12 +626,30 @@ def tree_to_c(tree, feature_names_list, func_name="predict_event_95", tau=0.50):
         else:
             val = tree_.value[node][0]
             total = val[0] + val[1]
-            prob = (val[1] / total) if total > 0 else 0.0
-            prediction = "true" if prob >= tau else "false"
-            return f"{indent}return {prediction}; /* p_pos={prob:.3f}, tau={tau:.2f} */\n"
+            if total > 0:
+                prob_0 = float(val[0] / total)
+                prob_1 = float(val[1] / total)
+            else:
+                prob_0 = 0.5
+                prob_1 = 0.5
+            pct_0 = prob_0 * 100.0
+            pct_1 = prob_1 * 100.0
+            prediction = "true" if prob_1 >= tau else "false"
+            return (
+                f"{indent}{{\n"
+                f"{indent}    DecisionTreeResult res = {{ {pct_0:.4f}f, {pct_1:.4f}f, {prob_0:.5f}f, {prob_1:.5f}f, {prediction} }};\n"
+                f"{indent}    return res; /* Class 0: {pct_0:.2f}%, Class 1: {pct_1:.2f}% (tau={tau:.2f}) */\n"
+                f"{indent}}}\n"
+            )
     
-    code = f"static inline bool {func_name}(const float* features) {{\n"
+    code = f"static inline DecisionTreeResult {func_name}(const float* features) {{\n"
     code += recurse(0, 1)
+    code += "}\n\n"
+    code += f"static inline bool {func_name}_pct(const float* features, float* percent_0, float* percent_1) {{\n"
+    code += f"    DecisionTreeResult res = {func_name}(features);\n"
+    code += f"    if (percent_0) *percent_0 = res.percent_0;\n"
+    code += f"    if (percent_1) *percent_1 = res.percent_1;\n"
+    code += f"    return res.prediction;\n"
     code += "}\n\n"
     return code
 
@@ -623,32 +658,42 @@ tau_hx = tau_dt_hypox if "tau_dt_hypox" in locals() else 0.25
 tau_t = tau_dt_tachy if "tau_dt_tachy" in locals() else 0.45
 
 # 1. Export Separate Header for Hypotension Model
-c_hypo = "// Direct C Decision Tree for Future Hypotension (95 Features, W=600s, STRIDE=5s)\n#include <stdbool.h>\n\n"
+c_hypo = "// Direct C Decision Tree for Future Hypotension (95 Features, W=600s, STRIDE=5s)\n" + C_HEADER_PREAMBLE
 c_hypo += tree_to_c(dt_hypo, c_names, func_name="predict_hypotension_95", tau=tau_h)
-path_hypo = os.path.join("models", "decision_tree", "efr32_decision_tree_hypotension.h")
-with open(path_hypo, "w") as f: f.write(c_hypo)
-print(f"Exported Hypotension C Header to: {path_hypo}")
+for base_path in [os.path.join("models", "decision_tree"), os.path.join("simple", "models", "decision_tree")]:
+    os.makedirs(base_path, exist_ok=True)
+    p = os.path.join(base_path, "efr32_decision_tree_hypotension.h")
+    with open(p, "w") as f: f.write(c_hypo)
+    print(f"Exported Hypotension C Header to: {p}")
 
 # 2. Export Separate Header for Hypoxia Model
-c_hypox = "// Direct C Decision Tree for Future Hypoxia (95 Features, W=600s, STRIDE=5s)\n#include <stdbool.h>\n\n"
+c_hypox = "// Direct C Decision Tree for Future Hypoxia (95 Features, W=600s, STRIDE=5s)\n" + C_HEADER_PREAMBLE
 c_hypox += tree_to_c(dt_hypox, c_names, func_name="predict_hypoxia_95", tau=tau_hx)
-path_hypox = os.path.join("models", "decision_tree", "efr32_decision_tree_hypoxia.h")
-with open(path_hypox, "w") as f: f.write(c_hypox)
-print(f"Exported Hypoxia C Header to: {path_hypox}")
+for base_path in [os.path.join("models", "decision_tree"), os.path.join("simple", "models", "decision_tree")]:
+    os.makedirs(base_path, exist_ok=True)
+    p = os.path.join(base_path, "efr32_decision_tree_hypoxia.h")
+    with open(p, "w") as f: f.write(c_hypox)
+    print(f"Exported Hypoxia C Header to: {p}")
 
 # 3. Export Separate Header for Tachycardia Model
-c_tachy = "// Direct C Decision Tree for Future Tachycardia (95 Features, W=600s, STRIDE=5s)\n#include <stdbool.h>\n\n"
+c_tachy = "// Direct C Decision Tree for Future Tachycardia (95 Features, W=600s, STRIDE=5s)\n" + C_HEADER_PREAMBLE
 c_tachy += tree_to_c(dt_tachy, c_names, func_name="predict_tachycardia_95", tau=tau_t)
-path_tachy = os.path.join("models", "decision_tree", "efr32_decision_tree_tachycardia.h")
-with open(path_tachy, "w") as f: f.write(c_tachy)
-print(f"Exported Tachycardia C Header to: {path_tachy}")
+for base_path in [os.path.join("models", "decision_tree"), os.path.join("simple", "models", "decision_tree")]:
+    os.makedirs(base_path, exist_ok=True)
+    p = os.path.join(base_path, "efr32_decision_tree_tachycardia.h")
+    with open(p, "w") as f: f.write(c_tachy)
+    print(f"Exported Tachycardia C Header to: {p}")
 
 # 4. Also Export Combined Header for Convenience
-c_header = "// Combined Direct C Decision Trees (95 Features, W=600s, STRIDE=5s)\n#include <stdbool.h>\n\n"
+c_header = "// Combined Direct C Decision Trees (95 Features, W=600s, STRIDE=5s)\n" + C_HEADER_PREAMBLE
 c_header += tree_to_c(dt_hypo, c_names, func_name="predict_hypotension_95", tau=tau_h)
 c_header += tree_to_c(dt_hypox, c_names, func_name="predict_hypoxia_95", tau=tau_hx)
 c_header += tree_to_c(dt_tachy, c_names, func_name="predict_tachycardia_95", tau=tau_t)
-path_comb = os.path.join("models", "decision_tree", "efr32_decision_tree_95.h")
-with open(path_comb, "w") as f: f.write(c_header)
-print(f"Exported Combined C Header to: {path_comb}")
+for base_path in [os.path.join("models", "decision_tree"), os.path.join("simple", "models", "decision_tree")]:
+    os.makedirs(base_path, exist_ok=True)
+    p = os.path.join(base_path, "efr32_decision_tree_95.h")
+    with open(p, "w") as f: f.write(c_header)
+    print(f"Exported Combined C Header to: {p}")
+
+
 

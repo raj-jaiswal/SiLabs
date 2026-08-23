@@ -12,7 +12,7 @@
 This model predicts if a patient is going to develop **Tachycardia (Heart Rate HR > 100 bpm)** in the next 15 to 60 minutes.
 
 - **Input:** An array of **95 `float` values** calculated from a 10-minute (600-second) window of 1 Hz vital sign data.
-- **Output:** `true` (High Risk / Trigger Alert) or `false` (Normal / Stable).
+- **Output:** A `DecisionTreeResult` struct providing percentages for both **Class 0 (`percent_0` - Normal)** and **Class 1 (`percent_1` - High Risk)**, plus binary decision `prediction`.
 - **Execution Cost:** ~0.010 milliseconds latency, 0 Bytes heap RAM (zero `malloc`).
 
 ---
@@ -26,9 +26,13 @@ Copy `efr32_decision_tree_tachycardia.h` into your project's `inc/` directory an
 #include "efr32_decision_tree_tachycardia.h"
 ```
 
-This header provides a single direct C function:
+This header provides two C function interfaces:
 ```c
-static inline bool predict_tachycardia_95(const float* features);
+// Method A: Returns DecisionTreeResult struct containing percent_0 (Class 0 %) and percent_1 (Class 1 %)
+static inline DecisionTreeResult predict_tachycardia_95(const float* features);
+
+// Method B: Populates percent_0 and percent_1 pointers and returns binary bool
+static inline bool predict_tachycardia_95_pct(const float* features, float* percent_0, float* percent_1);
 ```
 
 ---
@@ -53,13 +57,6 @@ Load the values from `scalers/scaler_Future_Tachycardia.json` into static Flash 
 ```c
 // 95 Mean Values (from scaler_Future_Tachycardia.json "mean")
 static const float TACHYCARDIA_MEAN[95] = {
-    76.927629f, 4.784585f, 68.047893f, 94.819795f, 0.001048f, 110.527794f, 9.223914f, 91.916066f, 136.158995f, 0.004407f, 
-    59.597625f, 5.103758f, 46.378837f, 72.515179f, 0.002254f, 78.795333f, 9.193576f, 64.963408f, 111.544526f, 0.003421f, 
-    99.443908f, 0.369046f, 98.104212f, 99.828090f, 0.000074f, 13.995006f, 0.568087f, 12.834784f, 15.066504f, 0.000486f, 
-    34.171730f, 1.388381f, 30.177934f, 36.778806f, 0.000661f, 48.715087f, 2.396431f, 44.465856f, 52.858947f, 0.000752f, 
-    33.700675f, 0.178181f, 33.413807f, 33.926531f, 0.000133f, 51.387308f, 5.750260f, 39.103871f, 73.359216f, 0.001312f, 
-    0.691014f, 0.075440f, 0.542067f, 0.936790f, -0.000048f, 0.990582f, 0.114682f, 0.739685f, 1.346202f, -0.000086f, 
-    85.117692f, 10.266390f, 66.159490f, 119.002715f, 0.004824f, 76.898132f, 3.479685f, 71.463887f, 84.304831f, 0.000857f, 
     2.343392f, 1.690383f, 0.481178f, 6.979657f, 0.000237f, 0.057319f, 5.422729f, -18.834679f, 19.965888f, 0.000383f, 
     78.800108f, 7.282488f, 69.217636f, 96.017055f, 0.003157f, 3.285578f, 3.739956f, 0.694504f, 14.407116f, -0.000238f, 
     0.911478f, 9.943833f, -32.616149f, 35.315899f, -0.001198f

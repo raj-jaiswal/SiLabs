@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { User, LogOut, Shield, RefreshCw } from 'lucide-react';
+import { User, LogOut, Shield, RefreshCw, Cpu } from 'lucide-react';
 import { PatientState } from '../types/patient';
 import { useAuth } from '@/context/AuthContext';
 import { SiliconLabsLogo } from './SiliconLabsLogo';
@@ -11,9 +11,18 @@ interface HeaderProps {
   strideCount: number;
   onOpenAdminSidebar?: () => void;
   onReSyncClock?: () => void;
+  onToggleArchitecture?: () => void;
+  isArchitectureOpen?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdminSidebar, onReSyncClock }) => {
+export const Header: React.FC<HeaderProps> = ({
+  patients,
+  strideCount,
+  onOpenAdminSidebar,
+  onReSyncClock,
+  onToggleArchitecture,
+  isArchitectureOpen,
+}) => {
   const { currentUser, logout } = useAuth();
 
   const criticalCount = patients.filter(p => p.triageRank === 'P1_CRITICAL').length;
@@ -50,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
           </div>
         </div>
 
-        {/* Right Section: Inline Segmented Triage Counts + Admin & User Controls */}
+        {/* Right Section: Inline Segmented Triage Counts + Controls */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Consolidated Segmented Triage Counts */}
           <div className="inline-flex items-center bg-slate-100 border border-slate-300 px-3 py-1.5 text-xs font-mono tabular-nums space-x-3">
@@ -74,6 +83,22 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
               <span className="font-bold text-emerald-700">{stableCount}</span>
             </span>
           </div>
+
+          {/* Architecture Spec Button */}
+          {onToggleArchitecture && (
+            <button
+              onClick={onToggleArchitecture}
+              title="View Hardware Architecture & Extracted ICU Parameters Block"
+              className={`px-3 py-1.5 text-xs font-mono font-bold border transition-colors flex items-center space-x-1.5 ${
+                isArchitectureOpen
+                  ? 'bg-red-50 text-red-700 border-red-300'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
+              }`}
+            >
+              <Cpu className="w-3.5 h-3.5 text-red-600" />
+              <span>Hardware &amp; 9 Params (PPT)</span>
+            </button>
+          )}
 
           {/* Admin Re-Sync Clock Button */}
           {onReSyncClock && (

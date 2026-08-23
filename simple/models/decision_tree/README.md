@@ -21,7 +21,9 @@ Welcome! This directory contains the pre-compiled C decision tree headers and st
 1. **Copy the Header File:** Copy the target `.h` file into your Simplicity Studio / Gecko SDK `inc/` folder.
 2. **Normalize the 95 Input Features:** Standardize raw features using the `MEAN` and `STD` arrays provided in each model's guide:
    $$\text{scaled\_features}[i] = \frac{\text{raw\_features}[i] - \text{MEAN}[i]}{\text{STD}[i]}$$
-3. **Execute Prediction:** Call the direct C function:
-   - `predict_hypotension_95(scaled_features)`
-   - `predict_hypoxia_95(scaled_features)`
-   - `predict_tachycardia_95(scaled_features)`
+3. **Execute Prediction:** Call the direct C function to get percentage probabilities for both **Class 0 (`percent_0` - Normal)** and **Class 1 (`percent_1` - Event)**:
+   - `DecisionTreeResult res = predict_hypotension_95(scaled_features);`
+   - `DecisionTreeResult res = predict_hypoxia_95(scaled_features);`
+   - `DecisionTreeResult res = predict_tachycardia_95(scaled_features);`
+   - Or with float pointers: `predict_hypotension_95_pct(scaled_features, &percent_0, &percent_1);`
+

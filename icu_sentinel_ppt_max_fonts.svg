@@ -1,0 +1,248 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" style="background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Sharp arrows -->
+    <marker id="arrow-black" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#000000"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#EF4444"/>
+    </marker>
+  </defs>
+
+  <!-- PURE WHITE BACKGROUND -->
+  <rect width="1920" height="1080" fill="#FFFFFF"/>
+
+  <!-- TOP HEADER BANNER -->
+  <g transform="translate(0, 0)">
+    <!-- Dark Navy Header Bar -->
+    <rect width="1920" height="100" fill="#0F172A"/>
+    
+    <!-- Header Title -->
+    <text x="60" y="65" fill="#FFFFFF" font-size="46" font-weight="700" font-family="Georgia, 'Times New Roman', serif">System Diagram</text>
+
+    <!-- Center Challenge Logo -->
+    <g transform="translate(760, 15)">
+      <path d="M 0 35 L 40 35 L 50 15 L 60 55 L 70 25 L 80 40 L 90 35 L 260 35" stroke="#1E40AF" stroke-width="2.5" fill="none"/>
+      <rect x="70" y="5" width="130" height="60" rx="8" fill="#1E3A8A" opacity="0.6"/>
+      <text x="135" y="34" fill="#60A5FA" font-size="22" font-weight="900" text-anchor="middle">IOT</text>
+      <text x="135" y="58" fill="#FFFFFF" font-size="20" font-weight="900" text-anchor="middle">CHALLENGE 2026</text>
+    </g>
+
+    <!-- Corporate Badges -->
+    <g transform="translate(1500, 20)">
+      <g transform="translate(0, 0)">
+        <path d="M 15 25 C 25 10 50 10 60 25 C 45 40 20 40 15 25 Z" fill="#FFFFFF"/>
+        <text x="68" y="32" fill="#FFFFFF" font-size="18" font-weight="900">SILICON LABS</text>
+      </g>
+      <g transform="translate(230, 0)">
+        <text x="0" y="32" fill="#FFFFFF" font-size="24" font-weight="900" font-style="italic">FPT</text>
+        <text x="0" y="52" fill="#94A3B8" font-size="14" font-weight="700">Software</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- SUBHEADER: Detailed Architecture -->
+  <text x="60" y="148" fill="#000000" font-size="38" font-weight="900">Detailed Architecture</text>
+
+  <!-- ==================== STREAM 1: PATIENT 1 (TOP STREAM) ==================== -->
+  <!-- Sensors Label & Arrow -->
+  <text x="35" y="285" fill="#000000" font-size="24" font-weight="800">Sensors</text>
+  <line x1="125" y1="278" x2="160" y2="278" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+  <!-- Patient 1 Primary Sensors Box -->
+  <g transform="translate(170, 190)">
+    <rect x="0" y="0" width="240" height="175" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+    <text x="120" y="38" fill="#000000" font-size="20" font-weight="700" text-anchor="middle">ECG electrodes</text>
+    <text x="120" y="72" fill="#000000" font-size="20" font-weight="700" text-anchor="middle">Blood pressure cuff</text>
+    <text x="120" y="106" fill="#000000" font-size="20" font-weight="700" text-anchor="middle">Arterial line</text>
+    <text x="120" y="140" fill="#000000" font-size="20" font-weight="700" text-anchor="middle">Pulse oximeter</text>
+  </g>
+
+  <!-- Labels Under Patient 1 Box -->
+  <text x="35" y="390" fill="#000000" font-size="16" font-weight="600">RS232 to UART</text>
+  <text x="35" y="412" fill="#000000" font-size="16" font-weight="600">converter</text>
+
+  <text x="170" y="405" fill="#000000" font-size="26" font-weight="900">BGM220</text>
+  <text x="170" y="435" fill="#000000" font-size="26" font-weight="900">Patient Data</text>
+
+  <!-- Arrow Stream 1 -> Individual Patients -->
+  <g transform="translate(410, 278)">
+    <line x1="0" y1="0" x2="225" y2="0" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+    <text x="112" y="26" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Data Collection &amp;</text>
+    <text x="112" y="52" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Transmission</text>
+  </g>
+
+  <!-- ==================== STREAM 2: PATIENT 2 (MIDDLE STREAM) ==================== -->
+  <text x="35" y="645" fill="#000000" font-size="24" font-weight="800">Sensors</text>
+  <line x1="125" y1="638" x2="160" y2="638" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+  <g transform="translate(170, 585)">
+    <rect x="0" y="0" width="240" height="100" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+    <text x="120" y="44" fill="#000000" font-size="26" font-weight="800" text-anchor="middle">Patient Data</text>
+    <text x="120" y="76" fill="#000000" font-size="28" font-weight="900" text-anchor="middle">BGM220</text>
+  </g>
+
+  <!-- Arrow Stream 2 -> EFR32 -->
+  <g transform="translate(410, 638)">
+    <line x1="0" y1="0" x2="265" y2="0" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+    <text x="132" y="26" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Data Collection &amp;</text>
+    <text x="132" y="52" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Transmission</text>
+  </g>
+
+  <!-- ==================== STREAM 3: PATIENT 3 (BOTTOM STREAM) ==================== -->
+  <text x="35" y="775" fill="#000000" font-size="24" font-weight="800">Sensors</text>
+  <line x1="125" y1="768" x2="160" y2="768" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+  <g transform="translate(170, 715)">
+    <rect x="0" y="0" width="240" height="100" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+    <text x="120" y="44" fill="#000000" font-size="26" font-weight="800" text-anchor="middle">Patient Data</text>
+    <text x="120" y="76" fill="#000000" font-size="28" font-weight="900" text-anchor="middle">BGM220</text>
+  </g>
+
+  <!-- Arrow Stream 3 -> EFR32 -->
+  <g transform="translate(410, 768)">
+    <line x1="0" y1="0" x2="265" y2="0" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+    <text x="132" y="26" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Data Collection &amp;</text>
+    <text x="132" y="52" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Transmission</text>
+  </g>
+
+  <!-- Scalability Vertical Dotted Line -->
+  <line x1="290" y1="830" x2="290" y2="925" stroke="#000000" stroke-width="4.5" stroke-dasharray="8 8"/>
+
+  <!-- ==================== CENTER SECTION: INDIVIDUAL PATIENTS & EFR32 ==================== -->
+  <!-- Top Box Header -->
+  <text x="820" y="180" fill="#000000" font-size="22" font-weight="900" text-anchor="middle">Individual Patients</text>
+
+  <!-- Top Box: Individual Patients / Data Preprocessing / Conventional ML Algorithms -->
+  <g transform="translate(635, 190)">
+    <rect x="0" y="0" width="370" height="280" rx="16" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+
+    <!-- Data Preprocessing Section -->
+    <text x="185" y="36" fill="#000000" font-size="24" font-weight="900" text-anchor="middle">Data Preprocessing</text>
+    <text x="45" y="68" fill="#000000" font-size="21" font-weight="700">• Denoising Data</text>
+    <text x="45" y="96" fill="#000000" font-size="21" font-weight="700">• Moving Averages</text>
+    <text x="45" y="124" fill="#000000" font-size="21" font-weight="700">• Simple Anamoly Detection</text>
+
+    <!-- Conventional ML Algorithms Section -->
+    <text x="185" y="165" fill="#000000" font-size="24" font-weight="900" text-anchor="middle">Conventional ML Algorithms</text>
+    <text x="45" y="195" fill="#000000" font-size="21" font-weight="700">• CNN</text>
+    <text x="45" y="223" fill="#000000" font-size="21" font-weight="700">• TREE</text>
+    <text x="45" y="251" fill="#000000" font-size="21" font-weight="700">• XGB</text>
+  </g>
+
+  <!-- Label below Top Box: EFR32x G26 Explorer/Dev Kit -->
+  <text x="820" y="502" fill="#000000" font-size="26" font-weight="900" text-anchor="middle">EFR32x G26</text>
+  <text x="820" y="528" fill="#000000" font-size="19" font-weight="700" text-anchor="middle">Explorer/Dev Kit</text>
+
+  <!-- Middle EFR32 Box (Patient 2) -->
+  <g transform="translate(675, 585)">
+    <rect x="0" y="0" width="280" height="100" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+    <text x="140" y="46" fill="#000000" font-size="26" font-weight="900" text-anchor="middle">EFR32x G26</text>
+    <text x="140" y="76" fill="#000000" font-size="19" font-weight="700" text-anchor="middle">Explorer/Dev Kit</text>
+  </g>
+
+  <!-- Bottom EFR32 Box (Patient 3) -->
+  <g transform="translate(675, 715)">
+    <rect x="0" y="0" width="280" height="100" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.8"/>
+    <text x="140" y="46" fill="#000000" font-size="26" font-weight="900" text-anchor="middle">EFR32x G26</text>
+    <text x="140" y="76" fill="#000000" font-size="19" font-weight="700" text-anchor="middle">Explorer/Dev Kit</text>
+  </g>
+
+  <line x1="820" y1="830" x2="820" y2="925" stroke="#000000" stroke-width="4.5" stroke-dasharray="8 8"/>
+
+  <!-- ==================== CONVERGENCE BUS & TRANSMISSION ==================== -->
+  <!-- Output lines from EFR32 nodes to central bus -->
+  <line x1="1005" y1="330" x2="1025" y2="330" stroke="#000000" stroke-width="3"/>
+  <line x1="955" y1="638" x2="1025" y2="638" stroke="#000000" stroke-width="3"/>
+  <line x1="955" y1="768" x2="1025" y2="768" stroke="#000000" stroke-width="3"/>
+
+  <!-- Additional bus tap lines -->
+  <line x1="955" y1="840" x2="1025" y2="840" stroke="#000000" stroke-width="3"/>
+  <line x1="955" y1="900" x2="1025" y2="900" stroke="#000000" stroke-width="3"/>
+
+  <!-- Central Vertical Bus Line -->
+  <line x1="1025" y1="210" x2="1025" y2="930" stroke="#000000" stroke-width="4"/>
+
+  <!-- MID-BUS OUTPUT ARROW (At Vertical Midpoint y=535) into wifi-adapter -->
+  <line x1="1025" y1="535" x2="1070" y2="535" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+  <!-- RED OUTLINE BOX: wifi-adapter (Centered Vertically at y=502..567) -->
+  <g transform="translate(1075, 502)">
+    <rect x="0" y="0" width="250" height="65" rx="14" fill="#FFFFFF" stroke="#FF4D4D" stroke-width="3"/>
+    <text x="125" y="42" fill="#FF4D4D" font-size="24" font-weight="800" text-anchor="middle">wifi-adapter</text>
+  </g>
+
+  <!-- Arrow wifi-adapter -> Central Node (Entering Central Node at Midpoint y=535) -->
+  <line x1="1325" y1="535" x2="1390" y2="535" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+  <!-- Text under transmission arrow: Preprocessed CNN Data & Algorithm Results -->
+  <text x="1200" y="595" fill="#000000" font-size="22" font-weight="900" text-anchor="middle">Preprocessed CNN Data &amp;</text>
+  <text x="1200" y="625" fill="#000000" font-size="22" font-weight="900" text-anchor="middle">Algorithm Results</text>
+
+  <!-- ==================== RIGHT SECTION: CENTRAL NODE (VERTICALLY & HORIZONTALLY CENTERED AT Y=535) ==================== -->
+  <!-- Container Box: Central Node (Dashed Line Outline - Centered at x=1395..1870, y=260..810) -->
+  <g transform="translate(1395, 260)">
+    <rect x="0" y="0" width="475" height="550" rx="22" fill="#FFFFFF" stroke="#000000" stroke-width="3.2" stroke-dasharray="8 8"/>
+    <text x="237" y="42" fill="#000000" font-size="30" font-weight="900" text-anchor="middle">Central Node</text>
+
+    <!-- Master Node: Raspberry Pi 4 -->
+    <g transform="translate(25, 60)">
+      <rect x="0" y="0" width="425" height="70" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="3"/>
+      <text x="212" y="46" fill="#000000" font-size="28" font-weight="900" text-anchor="middle">Raspberry Pi 4</text>
+    </g>
+
+    <!-- Splitter Arrow from Pi 4 to 3 Parallel Branches -->
+    <line x1="237" y1="130" x2="237" y2="160" stroke="#000000" stroke-width="3"/>
+    <!-- Horizontal Splitter Bar -->
+    <line x1="80" y1="160" x2="395" y2="160" stroke="#000000" stroke-width="3"/>
+
+    <!-- Downward Arrows into 3 Parallel Nodes -->
+    <line x1="80" y1="160" x2="80" y2="190" stroke="#000000" stroke-width="2.5" marker-end="url(#arrow-black)"/>
+    <line x1="237" y1="160" x2="237" y2="190" stroke="#000000" stroke-width="2.5" marker-end="url(#arrow-black)"/>
+    <line x1="395" y1="160" x2="395" y2="190" stroke="#000000" stroke-width="2.5" marker-end="url(#arrow-black)"/>
+
+    <!-- PARALLEL NODE 1: CNN -->
+    <g transform="translate(15, 190)">
+      <rect x="0" y="0" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.5"/>
+      <text x="65" y="50" fill="#000000" font-size="28" font-weight="900" text-anchor="middle">CNN</text>
+      <text x="65" y="82" fill="#000000" font-size="15" font-weight="700" text-anchor="middle">preprocessed</text>
+      <text x="65" y="102" fill="#000000" font-size="15" font-weight="700" text-anchor="middle">data</text>
+    </g>
+
+    <!-- PARALLEL NODE 2: Algorithm Results -->
+    <g transform="translate(165, 190)">
+      <rect x="0" y="0" width="144" height="130" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.5"/>
+      <text x="72" y="54" fill="#000000" font-size="22" font-weight="900" text-anchor="middle">Algorithm</text>
+      <text x="72" y="86" fill="#000000" font-size="22" font-weight="900" text-anchor="middle">Results</text>
+    </g>
+
+    <!-- PARALLEL NODE 3: Meta Data -->
+    <g transform="translate(330, 190)">
+      <rect x="0" y="0" width="130" height="130" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.5"/>
+      <text x="65" y="64" fill="#000000" font-size="23" font-weight="900" text-anchor="middle">Meta Data</text>
+    </g>
+
+    <!-- Lines from 3 Parallel Nodes into Convergence Bar -->
+    <line x1="80" y1="320" x2="80" y2="350" stroke="#000000" stroke-width="2.5"/>
+    <line x1="237" y1="320" x2="237" y2="350" stroke="#000000" stroke-width="2.5"/>
+    <line x1="395" y1="320" x2="395" y2="350" stroke="#000000" stroke-width="2.5"/>
+
+    <!-- Horizontal Convergence Bar -->
+    <line x1="80" y1="350" x2="395" y2="350" stroke="#000000" stroke-width="3"/>
+    <!-- Downward Arrow into Ensemble NN -->
+    <line x1="237" y1="350" x2="237" y2="385" stroke="#000000" stroke-width="3" marker-end="url(#arrow-black)"/>
+
+    <!-- Ensemble Neural Network Node -->
+    <g transform="translate(50, 385)">
+      <rect x="0" y="0" width="375" height="58" rx="14" fill="#FFFFFF" stroke="#000000" stroke-width="2.5"/>
+      <text x="187" y="37" fill="#000000" font-size="23" font-weight="800" text-anchor="middle">Ensemble Neural Network</text>
+    </g>
+
+    <!-- Downward Arrow to Risk Evaluation -->
+    <line x1="237" y1="443" x2="237" y2="475" stroke="#000000" stroke-width="2.5" marker-end="url(#arrow-black)"/>
+
+    <!-- Risk Evaluation & Detection Node -->
+    <text x="237" y="508" fill="#000000" font-size="21" font-weight="800" text-anchor="middle">Risk Evaluation &amp; Detection</text>
+  </g>
+
+</svg>

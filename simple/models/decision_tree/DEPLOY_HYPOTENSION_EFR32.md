@@ -12,7 +12,7 @@
 This model predicts if a patient is going to develop **Hypotension (Mean Arterial Pressure < 65 mmHg)** in the next 15 to 60 minutes.
 
 - **Input:** An array of **95 `float` values** calculated from a 10-minute (600-second) window of 1 Hz vital sign data.
-- **Output:** `true` (High Risk / Trigger Alert) or `false` (Normal / Stable).
+- **Output:** A `DecisionTreeResult` struct providing percentages for both **Class 0 (`percent_0` - Normal)** and **Class 1 (`percent_1` - High Risk)**, plus binary decision `prediction`.
 - **Execution Cost:** ~0.005 milliseconds latency, 0 Bytes heap RAM (zero `malloc`).
 
 ---
@@ -26,9 +26,13 @@ Copy `efr32_decision_tree_hypotension.h` into your project's `inc/` directory an
 #include "efr32_decision_tree_hypotension.h"
 ```
 
-This header provides a single direct C function:
+This header provides two C function interfaces:
 ```c
-static inline bool predict_hypotension_95(const float* features);
+// Method A: Returns DecisionTreeResult struct containing percent_0 (Class 0 %) and percent_1 (Class 1 %)
+static inline DecisionTreeResult predict_hypotension_95(const float* features);
+
+// Method B: Populates percent_0 and percent_1 pointers and returns binary bool
+static inline bool predict_hypotension_95_pct(const float* features, float* percent_0, float* percent_1);
 ```
 
 ---
@@ -83,24 +87,45 @@ static const float HYPOTENSION_STD[95] = {
 ---
 
 ### Step 4: Write the Prediction Wrapper Function
-Here is the complete C function to normalize features and run inference:
+Here are complete C functions to normalize features and run inference returning Class 0 (Normal) and Class 1 (Hypotension) percentages:
 
 ```c
-bool check_future_hypotension(const float* raw_95_features) {
+// Method A: Returns complete DecisionTreeResult struct (percent_0, percent_1, prediction)
+DecisionTreeResult check_future_hypotension(const float* raw_95_features) {
     float scaled_features[95];
 
     // 1. Scale all 95 features
     for (int i = 0; i < 95; ++i) {
         float s = HYPOTENSION_STD[i];
-        if (s > 1e-7f) {
-            scaled_features[i] = (raw_95_features[i] - HYPOTENSION_MEAN[i]) / s;
-        } else {
-            scaled_features[i] = 0.0f;
-        }
+        scaled_features[i] = (s > 1e-7f) ? (raw_95_features[i] - HYPOTENSION_MEAN[i]) / s : 0.0f;
     }
 
     // 2. Run Direct Decision Tree Function
     return predict_hypotension_95(scaled_features);
+}
+
+// Example usage on EFR32 microcontroller:
+void sample_usage(const float* raw_vitals) {
+    DecisionTreeResult res = check_future_hypotension(raw_vitals);
+    
+    // Access percentages for both Class 0 (Normal) and Class 1 (Hypotension Event)
+    float pct_normal = res.percent_0;    // e.g. 85.50%
+    float pct_hypotension = res.percent_1; // e.g. 14.50%
+    bool is_high_risk = res.prediction;  // true if percent_1 >= tau
+
+    printf("Normal (Class 0)      : %.2f%%\n", pct_normal);
+    printf("Hypotension (Class 1) : %.2f%%\n", pct_hypotension);
+    printf("Risk Status           : %s\n", is_high_risk ? "TRIGGER ALERT" : "STABLE");
+}
+
+// Method B: Populates percent_0 and percent_1 pointers directly
+bool check_future_hypotension_pct(const float* raw_95_features, float* percent_0, float* percent_1) {
+    float scaled_features[95];
+    for (int i = 0; i < 95; ++i) {
+        float s = HYPOTENSION_STD[i];
+        scaled_features[i] = (s > 1e-7f) ? (raw_95_features[i] - HYPOTENSION_MEAN[i]) / s : 0.0f;
+    }
+    return predict_hypotension_95_pct(scaled_features, percent_0, percent_1);
 }
 ```
 

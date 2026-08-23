@@ -1,0 +1,17 @@
+==================================================
+MODEL PERFORMANCE REPORT: HYPOXIA PREDICTION
+==================================================
+
+Metrics:
+  - Accuracy  : 0.8421 (84.21%)
+  - Precision : 0.2018 (20.18%)
+  - Recall    : 0.7390 (73.90%)
+  - F1 Score  : 0.3171 (31.71%)
+  - AUROC     : 0.8314 (83.14%)
+
+Confusion Matrix Breakdown:
+  - True Negative  (TN) : 6,081,256
+  - False Positive (FP) : 1,094,012
+  - False Negative (FN) : 97,688
+  - True Positive  (TP) : 276,626
+  - Total Samples      : 7,549,582

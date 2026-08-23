@@ -12,7 +12,7 @@
 This model predicts if a patient is going to develop **Hypoxia (Oxygen Saturation SpO2 < 90%)** in the next 15 to 60 minutes.
 
 - **Input:** An array of **95 `float` values** calculated from a 10-minute (600-second) window of 1 Hz vital sign data.
-- **Output:** `true` (High Risk / Trigger Alert) or `false` (Normal / Stable).
+- **Output:** A `DecisionTreeResult` struct providing percentages for both **Class 0 (`percent_0` - Normal)** and **Class 1 (`percent_1` - High Risk)**, plus binary decision `prediction`.
 - **Execution Cost:** ~0.015 milliseconds latency, 0 Bytes heap RAM (zero `malloc`).
 
 ---
@@ -26,9 +26,13 @@ Copy `efr32_decision_tree_hypoxia.h` into your project's `inc/` directory and in
 #include "efr32_decision_tree_hypoxia.h"
 ```
 
-This header provides a single direct C function:
+This header provides two C function interfaces:
 ```c
-static inline bool predict_hypoxia_95(const float* features);
+// Method A: Returns DecisionTreeResult struct containing percent_0 (Class 0 %) and percent_1 (Class 1 %)
+static inline DecisionTreeResult predict_hypoxia_95(const float* features);
+
+// Method B: Populates percent_0 and percent_1 pointers and returns binary bool
+static inline bool predict_hypoxia_95_pct(const float* features, float* percent_0, float* percent_1);
 ```
 
 ---
@@ -58,11 +62,11 @@ static const float HYPOXIA_MEAN[95] = {
     99.250838f, 0.487007f, 97.525369f, 99.776331f, -0.000135f, 14.035328f, 0.613775f, 12.758797f, 15.239014f, 0.000473f, 
     33.914732f, 1.437878f, 29.702826f, 36.651122f, 0.000614f, 48.891097f, 3.088897f, 43.938089f, 54.150558f, 0.003899f, 
     33.548657f, 0.203174f, 33.235071f, 33.806246f, -0.000014f, 51.267473f, 5.888306f, 38.618447f, 74.110407f, 0.001741f, 
-    0.660175f, 0.069282f, 0.522031f, 0.883384f, -0.000046f, 0.941370f, 0.104283f, 0.711084f, 1.261985f, -0.000077f, 
-    82.354893f, 9.797450f, 64.233996f, 114.289718f, 0.005333f, 74.294363f, 3.310669f, 69.135282f, 81.270969f, 0.000914f, 
-    2.075362f, 1.511135f, 0.435256f, 6.307660f, 0.000150f, 0.054727f, 4.893173f, -16.808014f, 18.005097f, 0.000289f, 
-    78.974538f, 7.171207f, 69.444148f, 95.718823f, 0.003809f, 3.176375f, 3.585638f, 0.672703f, 13.863201f, 0.000027f, 
-    0.948219f, 9.581424f, -31.489577f, 34.224679f, -0.001116f
+    0.703356f, 1.024863f, 80.896293f, 74.400437f, 2.123400f, -0.010464f, 76.412837f, 3.438800f, 1.025504f, 4.364578f, 
+    9.702166f, 5.243504f, 9.686031f, 0.376769f, 0.573725f, 1.414648f, 2.467518f, 0.186940f, 6.123875f, 0.077824f, 
+    0.119442f, 9.977728f, 3.234206f, 1.504776f, 4.924078f, 7.645919f, 4.017601f, 10.540971f, 66.124995f, 89.093632f, 
+    43.760712f, 62.140882f, 98.095986f, 12.726602f, 29.929447f, 43.491987f, 33.404985f, 38.793527f, 0.549908f, 0.761363f, 
+    62.382389f, 69.264095f, 0.456616f, -17.054418f, 66.468719f
 };
 
 // 95 Standard Deviation Values (from scaler_Future_Hypoxia.json "std")

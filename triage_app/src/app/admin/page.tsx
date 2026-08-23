@@ -6,6 +6,7 @@ import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
 import { CriticalAlertBar } from '@/components/CriticalAlertBar';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { IcuArchitectureBlock } from '@/components/IcuArchitectureBlock';
 import { useAuth } from '@/context/AuthContext';
 import { PatientState } from '@/types/patient';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
@@ -21,6 +22,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState<boolean>(false);
+  const [showArchitecture, setShowArchitecture] = useState<boolean>(false);
 
   // Admin Login State for /admin
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
@@ -125,36 +127,36 @@ export default function AdminPage() {
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-slate-900 font-sans">
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-6">
+        <div className="w-full max-w-md bg-white border border-slate-300 p-8 shadow-none space-y-6">
           
           <div className="text-center space-y-2 select-none">
-            <div className="inline-flex p-3 bg-red-50 rounded-xl border border-red-200 text-red-700 mb-1">
+            <div className="inline-flex p-3 bg-red-50 border border-red-200 text-red-700 mb-1">
               <Shield className="w-6 h-6" />
             </div>
             <h1 className="text-lg font-bold tracking-tight uppercase text-slate-900">Administrator Login</h1>
             <p className="text-xs text-slate-600">Enter Admin password to access `/admin` control panel</p>
           </div>
 
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center space-x-3 text-xs font-mono">
-            <div className="p-2 bg-slate-200 rounded text-slate-800">
+          <div className="p-3 bg-slate-50 border border-slate-300 flex items-center space-x-3 text-xs font-mono">
+            <div className="p-2 bg-slate-200 text-slate-800">
               <Mail className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-semibold text-slate-900">admin@hospital.com</div>
+              <div className="font-bold text-slate-900">admin@hospital.com</div>
               <div className="text-[11px] text-slate-600">System Administrator</div>
             </div>
           </div>
 
           <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs font-mono">
             {adminLoginError && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-center font-semibold flex items-center justify-center space-x-2">
+              <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-center font-bold flex items-center justify-center space-x-2">
                 <ShieldAlert className="w-4 h-4 text-red-600" />
                 <span>{adminLoginError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-slate-700 font-medium mb-1.5">
+              <label className="block text-slate-700 font-semibold mb-1.5">
                 Admin Password
               </label>
               <div className="relative">
@@ -166,14 +168,14 @@ export default function AdminPage() {
                   value={adminPasswordInput}
                   onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
                   placeholder="Enter admin password"
-                  className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                  className="w-full bg-white border border-slate-300 pl-9 pr-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded-lg transition-colors text-xs shadow-sm"
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors text-xs"
             >
               Sign In as Administrator
             </button>
@@ -200,12 +202,14 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col font-sans text-slate-900">
+    <main className="min-h-screen bg-white flex flex-col font-sans text-slate-900 select-none">
       <Header
         patients={patients}
         strideCount={strideCount}
         onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
         onReSyncClock={handleReSyncClock}
+        onToggleArchitecture={() => setShowArchitecture(!showArchitecture)}
+        showArchitecture={showArchitecture}
       />
       
       {!dismissAlertBar && (
@@ -214,6 +218,13 @@ export default function AdminPage() {
           onSelectPatient={(id) => setSelectedPatientId(id)}
           onDismiss={() => setDismissAlertBar(true)}
         />
+      )}
+
+      {/* Slide / Block Toggle for System Architecture & Extracted 9 Parameters */}
+      {showArchitecture && (
+        <div className="max-w-7xl mx-auto w-full px-6 pt-6 animate-in fade-in slide-in-from-top-4">
+          <IcuArchitectureBlock />
+        </div>
       )}
 
       <div className="flex-1">
