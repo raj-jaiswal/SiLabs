@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { TriageTable } from '@/components/TriageTable';
 import { PatientDrawer } from '@/components/PatientDrawer';
+import { CriticalAlertBar } from '@/components/CriticalAlertBar';
 import { PatientState } from '@/types/patient';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
 
@@ -13,6 +14,7 @@ export default function Home() {
   const [strideCount, setStrideCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
 
   // 1. Fetch patient data from API on mount
   useEffect(() => {
@@ -70,6 +72,9 @@ export default function Home() {
     ? patients.find(p => p.profile.id === selectedPatientId) || null
     : null;
 
+  // Derived list of P1 Critical patients
+  const criticalPatients = patients.filter(p => p.triageRank === 'P1_CRITICAL');
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-300">
@@ -93,6 +98,15 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">
       <Header patients={patients} strideCount={strideCount} />
+      
+      {!dismissAlertBar && (
+        <CriticalAlertBar
+          criticalPatients={criticalPatients}
+          onSelectPatient={(id) => setSelectedPatientId(id)}
+          onDismiss={() => setDismissAlertBar(true)}
+        />
+      )}
+
       <div className="flex-1">
         <TriageTable
           patients={patients}
