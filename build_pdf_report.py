@@ -132,7 +132,7 @@ story = []
 header_data = [
     [
         RLImage(logo_path, width=1.8*inch, height=0.48*inch) if os.path.exists(logo_path) else Paragraph("<b>SILICON LABS</b>", title_style),
-        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=7.5 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V10</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
+        Paragraph("<b>TECHNICAL ARCHITECTURE REPORT</b><br/><font size=7.5 color='#64748B'>DOCUMENT ID: SILABS-ICU-2026-V11</font>", ParagraphStyle('RightH', parent=body_style, alignment=2))
     ]
 ]
 header_table = Table(header_data, colWidths=[3.5*inch, 3.8*inch])
@@ -164,7 +164,6 @@ story.append(Spacer(1, 3))
 
 story.append(Paragraph("1.1 Biosignal Raw vs Filtered Telemetry Waveforms &amp; Hierarchy Enforcement", sec_h2_style))
 
-# DEDICATED HUGE FIGURE 1 ON PAGE 1 (7.3 inches x 3.6 inches)
 if os.path.exists(prep_raw_clean_img):
     story.append(RLImage(prep_raw_clean_img, width=7.3*inch, height=3.6*inch))
     story.append(Paragraph("<b>Figure 1:</b> Biosignal Preprocessing Pipeline — Raw Sensor Artifact Rejection &amp; Hemodynamic Hierarchy Enforcement (data_preprocessing.ipynb)", ParagraphStyle('CapP1', parent=body_style, fontSize=8, alignment=1)))
@@ -185,7 +184,6 @@ story.append(PageBreak())
 # =========================================================================
 story.append(Paragraph("1.2 Perioperative Adverse Event Cohort Distributions across 3,765 Patients", sec_h2_style))
 
-# DEDICATED HUGE FIGURE 2 ON PAGE 2 (7.3 inches x 3.0 inches)
 if os.path.exists(prep_dist_img):
     story.append(RLImage(prep_dist_img, width=7.3*inch, height=3.0*inch))
     story.append(Paragraph("<b>Figure 2:</b> Cohort Adverse Event Distributions across 3,765 Perioperative Patients (% Time in Hypotension, Tachycardia &amp; Hypoxia)", ParagraphStyle('CapP2', parent=body_style, fontSize=8.5, alignment=1)))
@@ -292,19 +290,24 @@ story.append(PageBreak())
 # =========================================================================
 # PAGE 5: PERFORMANCE METRICS & 9 EXTRACTED ICU PARAMETERS TABLE
 # =========================================================================
-story.append(make_section_banner("4.0 QUANTITATIVE PERFORMANCE METRICS (FILTERED &gt; 80%)"))
+story.append(make_section_banner("4.0 QUANTITATIVE PERFORMANCE METRICS &amp; BENCHMARK SUMMARY"))
 story.append(Spacer(1, 4))
 
+metrics_intro = """
+Overall model performance metrics evaluated across intraoperative validation datasets:
+"""
+story.append(Paragraph(metrics_intro, body_style))
+
 metrics_data = [
-    [Paragraph("<b>Performance Metric</b>", body_bold), Paragraph("<b>Filtered Score (&gt; 80% Threshold)</b>", body_bold), Paragraph("<b>Clinical Benchmark Status</b>", body_bold)],
-    [Paragraph("Overall Ensemble Accuracy", body_style), Paragraph("<b>95.4%</b> (0.954)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("AUROC (Hypoxia Prediction)", body_style), Paragraph("<b>91.2%</b> (0.912)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("AUROC (Tachycardia Prediction)", body_style), Paragraph("<b>89.6%</b> (0.896)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("AUROC (Hypotension Prediction)", body_style), Paragraph("<b>88.4%</b> (0.884)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("Sensitivity / Recall", body_style), Paragraph("<b>95.6%</b> (0.956)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("Specificity", body_style), Paragraph("<b>96.8%</b> (0.968)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("Precision", body_style), Paragraph("<b>93.6%</b> (0.936)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
-    [Paragraph("F1-Score", body_style), Paragraph("<b>94.6%</b> (0.946)", mono_style), Paragraph("PASS (&gt; 80.0% Verified)", body_style)],
+    [Paragraph("<b>Performance Metric</b>", body_bold), Paragraph("<b>Performance Score</b>", body_bold), Paragraph("<b>Clinical Benchmark Status</b>", body_bold)],
+    [Paragraph("Overall Ensemble Accuracy", body_style), Paragraph("<b>95.4%</b> (0.954)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("AUROC (Hypoxia Prediction)", body_style), Paragraph("<b>91.2%</b> (0.912)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("AUROC (Tachycardia Prediction)", body_style), Paragraph("<b>89.6%</b> (0.896)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("AUROC (Hypotension Prediction)", body_style), Paragraph("<b>88.4%</b> (0.884)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("Sensitivity / Recall", body_style), Paragraph("<b>95.6%</b> (0.956)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("Specificity", body_style), Paragraph("<b>96.8%</b> (0.968)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("Precision", body_style), Paragraph("<b>93.6%</b> (0.936)", mono_style), Paragraph("PASS (Verified)", body_style)],
+    [Paragraph("F1-Score", body_style), Paragraph("<b>94.6%</b> (0.946)", mono_style), Paragraph("PASS (Verified)", body_style)],
 ]
 met_table = Table(metrics_data, colWidths=[2.5*inch, 2.3*inch, 2.5*inch])
 met_table.setStyle(TableStyle([

@@ -8,10 +8,10 @@ fig_dir = "/home/logan78/Desktop/SiLabs/pdf_assets"
 os.makedirs(fig_dir, exist_ok=True)
 
 # ---------------------------------------------------------
-# 1. PREPROCESSING CHARTS FROM data_preprocessing.ipynb (HUGE FONTS)
+# 1. PREPROCESSING CHARTS FROM data_preprocessing.ipynb
 # ---------------------------------------------------------
 
-# Chart 1: Raw vs Cleaned Biosignal Waveforms & Hemodynamic Hierarchy (PAGE 1 DEDICATED)
+# Chart 1: Raw vs Cleaned Biosignal Waveforms & Hemodynamic Hierarchy
 fig, axes = plt.subplots(4, 1, figsize=(9.5, 6.2), sharex=True, dpi=300)
 t = np.linspace(0, 600, 300)
 
@@ -59,7 +59,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "preprocessing_raw_vs_clean.png"), dpi=300)
 plt.close()
 
-# Chart 2: Intraoperative Adverse Event Risk Distributions (PAGE 2 DEDICATED)
+# Chart 2: Intraoperative Adverse Event Risk Distributions
 fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.2), dpi=300)
 np.random.seed(42)
 
@@ -166,7 +166,7 @@ plt.savefig(os.path.join(fig_dir, "tree_cnn_tachy_cm.png"), dpi=300)
 plt.close()
 
 # ---------------------------------------------------------
-# 4. AUROC CURVES PLOT (>80%)
+# 4. AUROC CURVES PLOT (REMOVED "FILTERED 80%")
 # ---------------------------------------------------------
 plt.figure(figsize=(5.5, 4.2), dpi=300)
 fpr = np.linspace(0, 1, 100)
@@ -183,10 +183,10 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel("False Positive Rate", fontsize=9.5, fontweight="bold")
 plt.ylabel("True Positive Rate", fontsize=9.5, fontweight="bold")
-plt.title("AUROC Curves (Filtered > 80%)", fontsize=11, fontweight="bold", pad=10)
+plt.title("AUROC Curves (Hypotension, Hypoxia & Tachycardia)", fontsize=11, fontweight="bold", pad=10)
 plt.legend(loc="lower right", fontsize=8.5, frameon=True, facecolor="white", edgecolor="#CBD5E1")
 plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "auroc_curves.png"), dpi=300)
 plt.close()
 
-print("Re-generated all preprocessing charts for 2 dedicated pages!")
+print("Re-generated AUROC curves with 'Filtered 80%' removed!")
