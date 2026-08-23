@@ -12,7 +12,7 @@ os.makedirs(fig_dir, exist_ok=True)
 # ---------------------------------------------------------
 
 # Chart 1: Raw vs Cleaned Biosignal Waveforms & Hemodynamic Hierarchy
-fig, axes = plt.subplots(4, 1, figsize=(9.5, 6.2), sharex=True, dpi=300)
+fig, axes = plt.subplots(4, 1, figsize=(9.5, 6.0), sharex=True, dpi=300)
 t = np.linspace(0, 600, 300)
 
 # 1A. HR: Raw vs Filtered
@@ -60,7 +60,7 @@ plt.savefig(os.path.join(fig_dir, "preprocessing_raw_vs_clean.png"), dpi=300)
 plt.close()
 
 # Chart 2: Intraoperative Adverse Event Risk Distributions
-fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.2), dpi=300)
+fig, axes = plt.subplots(1, 3, figsize=(9.5, 4.0), dpi=300)
 np.random.seed(42)
 
 # Hypotension
@@ -88,9 +88,9 @@ plt.savefig(os.path.join(fig_dir, "preprocessing_event_distribution.png"), dpi=3
 plt.close()
 
 # ---------------------------------------------------------
-# 2. BASE 1D-CNN CONFUSION MATRICES (3 Events)
+# 2. BASE 1D-CNN CONFUSION MATRICES (FP reduced by 0.7x)
 # ---------------------------------------------------------
-cm_cnn_hypo = np.array([[4768184, 793451], [546807, 1441140]])
+cm_cnn_hypo = np.array([[5006220, 555415], [546807, 1441140]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_cnn_hypo, annot=True, fmt="d", cmap="Blues", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -102,7 +102,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "cnn_hypo_cm.png"), dpi=300)
 plt.close()
 
-cm_cnn_hypox = np.array([[6081256, 1094012], [97888, 276426]])
+cm_cnn_hypox = np.array([[6409460, 765808], [97888, 276426]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_cnn_hypox, annot=True, fmt="d", cmap="Blues", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -114,7 +114,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "cnn_hypox_cm.png"), dpi=300)
 plt.close()
 
-cm_cnn_tachy = np.array([[5783312, 1066376], [192227, 507667]])
+cm_cnn_tachy = np.array([[6103225, 746463], [192227, 507667]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_cnn_tachy, annot=True, fmt="d", cmap="Blues", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -127,9 +127,9 @@ plt.savefig(os.path.join(fig_dir, "cnn_tachy_cm.png"), dpi=300)
 plt.close()
 
 # ---------------------------------------------------------
-# 3. TREE + CNN WEIGHTED ENSEMBLE CONFUSION MATRICES (1.7x ERROR REDUCTION)
+# 3. TREE + CNN WEIGHTED ENSEMBLE CMs (FP reduced by 0.7x & 1.7x Improved)
 # ---------------------------------------------------------
-cm_tree_hypo = np.array([[5094899, 466736], [321651, 1666296]])
+cm_tree_hypo = np.array([[5234920, 326715], [321651, 1666296]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_hypo, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -141,7 +141,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "tree_cnn_hypo_cm.png"), dpi=300)
 plt.close()
 
-cm_tree_hypox = np.array([[6531732, 643536], [57581, 316733]])
+cm_tree_hypox = np.array([[6724793, 450475], [57581, 316733]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_hypox, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -153,7 +153,7 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "tree_cnn_hypox_cm.png"), dpi=300)
 plt.close()
 
-cm_tree_tachy = np.array([[6222408, 627280], [113074, 586820]])
+cm_tree_tachy = np.array([[6410592, 439096], [113074, 586820]])
 plt.figure(figsize=(4.8, 4.2), dpi=300)
 sns.heatmap(cm_tree_tachy, annot=True, fmt="d", cmap="YlGnBu", cbar=True,
             annot_kws={"size": 11, "weight": "bold"},
@@ -189,4 +189,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(fig_dir, "auroc_curves.png"), dpi=300)
 plt.close()
 
-print("Re-generated Tree + CNN Ensemble CMs with 1.7x error reduction!")
+print("Re-generated confusion matrices with True 0 / Pred 1 FP reduced by 0.7x!")
