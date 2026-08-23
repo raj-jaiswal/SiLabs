@@ -182,6 +182,13 @@ export default function AdminPage() {
     );
   }
 
+  const handleReSyncClock = () => {
+    const now = String(Date.now());
+    localStorage.setItem('silabs_master_start_time', now);
+    window.dispatchEvent(new Event('storage'));
+    setStrideCount(1);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">
       {/* Route Indicator Bar */}
@@ -217,6 +224,7 @@ export default function AdminPage() {
         patients={patients}
         strideCount={strideCount}
         onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
+        onReSyncClock={handleReSyncClock}
       />
       
       {!dismissAlertBar && (

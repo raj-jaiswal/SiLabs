@@ -123,11 +123,17 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {sortedPatients.map((patient) => {
                 const { profile, hypotension, hypoxia, tachycardia, triageRank } = patient;
+                const isEsp32 = profile.isEsp32Live || profile.id === 'PATIENT-000';
+
                 return (
                   <tr
                     key={profile.id}
                     onClick={() => onSelectPatient(patient)}
-                    className="hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                    className={`transition-colors cursor-pointer group ${
+                      isEsp32
+                        ? 'bg-slate-800/90 border-l-4 border-slate-400 hover:bg-slate-700/80 shadow-md'
+                        : 'hover:bg-slate-800/50'
+                    }`}
                   >
                     {/* Rank */}
                     <td className="py-4 px-4 whitespace-nowrap">
@@ -137,12 +143,18 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                     {/* Patient Profile */}
                     <td className="py-4 px-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-slate-800 rounded-full border border-slate-700 text-slate-300">
+                        <div className={`p-2 rounded-full border ${isEsp32 ? 'bg-slate-700 border-slate-500 text-amber-300' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
                           <User className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-100 group-hover:text-sky-400 transition-colors">
-                            {profile.patientNumber}
+                          <div className="font-bold text-slate-100 group-hover:text-sky-400 transition-colors flex items-center space-x-2">
+                            <span>{profile.patientNumber}</span>
+                            {isEsp32 && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-700 text-slate-200 border border-slate-500 shadow-sm font-mono flex items-center">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1" />
+                                ESP32 LIVE
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                             <span>{profile.age} yrs, {profile.sex}</span>

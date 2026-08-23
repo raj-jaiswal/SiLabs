@@ -28,7 +28,15 @@ export const PatientDrawer: React.FC<PatientDrawerProps> = ({ patient, onClose }
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-100">{profile.patientNumber}</h2>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-lg font-bold text-slate-100">{profile.patientNumber}</h2>
+                {(profile.isEsp32Live || profile.id === 'PATIENT-000') && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-slate-700 text-slate-200 border border-slate-500 shadow-sm font-mono flex items-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1" />
+                    ESP32 LIVE STREAM
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-400">
                 {profile.age} yrs • {profile.sex} • Blood Group: <span className="text-slate-200 font-semibold">{profile.bloodType}</span>
               </p>

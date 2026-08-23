@@ -33,6 +33,24 @@ const PHYSICIANS = [
 const BLOOD_TYPES = ['A+', 'O+', 'B+', 'AB+', 'A-', 'O-', 'B-', 'AB-'] as const;
 
 export function generateDemographics(patientId: string): PatientDemographics {
+  if (patientId === 'PATIENT-000' || patientId.includes('000')) {
+    return {
+      id: 'PATIENT-000',
+      patientNumber: 'PATIENT-000',
+      age: 48,
+      sex: 'Male',
+      bloodType: 'O+',
+      weightKg: 72,
+      heightCm: 175,
+      bmi: 23.5,
+      primaryDiagnosis: 'Real-Time ESP32 AI Model Telemetry Stream',
+      comorbidities: ['Live Wi-Fi Telemetry', 'Sub-Second Edge Prediction'],
+      allergies: ['None Known'],
+      attendingPhysician: 'Dr. ESP32 Wi-Fi Stream',
+      isEsp32Live: true,
+    };
+  }
+
   // Deterministic seed from patient ID number
   const numStr = patientId.replace(/\D/g, '') || '100';
   const seed = parseInt(numStr, 10);

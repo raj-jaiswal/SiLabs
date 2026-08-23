@@ -21,6 +21,7 @@ export interface PatientDemographics {
   comorbidities: string[];
   allergies: string[];
   attendingPhysician: string;
+  isEsp32Live?: boolean;
 }
 
 export interface VitalFrame {
@@ -47,4 +48,5 @@ export interface PatientState {
   tachycardia: IndicatorRisk;
   triageRank: TriageRank;
   activeEventCount: number;
+  isEsp32Live?: boolean;
 }

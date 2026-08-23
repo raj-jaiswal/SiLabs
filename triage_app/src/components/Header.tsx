@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HeartPulse, ShieldAlert, AlertTriangle, CheckCircle, User, LogOut, Shield } from 'lucide-react';
+import { HeartPulse, ShieldAlert, AlertTriangle, CheckCircle, User, LogOut, Shield, RefreshCw } from 'lucide-react';
 import { PatientState } from '../types/patient';
 import { useAuth } from '@/context/AuthContext';
 
@@ -9,9 +9,10 @@ interface HeaderProps {
   patients: PatientState[];
   strideCount: number;
   onOpenAdminSidebar?: () => void;
+  onReSyncClock?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdminSidebar }) => {
+export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdminSidebar, onReSyncClock }) => {
   const { currentUser, logout } = useAuth();
 
   const criticalCount = patients.filter(p => p.triageRank === 'P1_CRITICAL').length;
@@ -95,13 +96,26 @@ export const Header: React.FC<HeaderProps> = ({ patients, strideCount, onOpenAdm
             </div>
           )}
 
-          {currentUser?.role === 'ADMIN' && onOpenAdminSidebar && (
-            <button
-              onClick={onOpenAdminSidebar}
-              className="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 rounded-lg text-xs font-bold border border-rose-800 flex items-center transition-colors shadow-sm shadow-rose-950"
-            >
-              <Shield className="w-3.5 h-3.5 mr-1.5 text-rose-400" /> Admin Panel
-            </button>
+          {currentUser?.role === 'ADMIN' && (
+            <div className="flex items-center space-x-2">
+              {onReSyncClock && (
+                <button
+                  onClick={onReSyncClock}
+                  className="px-3 py-1.5 bg-sky-950/80 hover:bg-sky-900 text-sky-200 rounded-lg text-xs font-bold border border-sky-800 flex items-center transition-colors shadow-sm shadow-sky-950"
+                  title="Reset Master Clock to T=0 for all connected users"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-sky-400 animate-spin-slow" /> RE-SYNC CLOCK (T=0)
+                </button>
+              )}
+              {onOpenAdminSidebar && (
+                <button
+                  onClick={onOpenAdminSidebar}
+                  className="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-200 rounded-lg text-xs font-bold border border-rose-800 flex items-center transition-colors shadow-sm shadow-rose-950"
+                >
+                  <Shield className="w-3.5 h-3.5 mr-1.5 text-rose-400" /> Admin Panel
+                </button>
+              )}
+            </div>
           )}
 
           {currentUser && (
