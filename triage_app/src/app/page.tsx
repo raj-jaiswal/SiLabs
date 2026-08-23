@@ -42,23 +42,33 @@ export default function Home() {
     loadPatients();
   }, []);
 
-  // 2. Automatic Continuous 5-Second Stride Loop
+  // 2. Master Synchronized 5-Second Stride Clock Loop (100% Synced across Admin & All Users)
   useEffect(() => {
     if (patients.length === 0 || !currentUser) return;
 
-    const interval = setInterval(() => {
-      setStrideCount(prev => prev + 1);
+    // Retrieve or initialize shared master start time in localStorage
+    let masterStartTime = localStorage.getItem('silabs_master_start_time');
+    if (!masterStartTime) {
+      masterStartTime = String(Date.now());
+      localStorage.setItem('silabs_master_start_time', masterStartTime);
+    }
+    const startTimeNum = parseInt(masterStartTime, 10);
+
+    const syncTelemetry = () => {
+      const elapsedMs = Math.max(0, Date.now() - startTimeNum);
+      const currentStride = Math.floor(elapsedMs / 5000) + 1;
+      setStrideCount(currentStride);
 
       setPatients(prevPatients =>
         prevPatients.map(patient => {
           if (!patient.vitalsHistory || patient.vitalsHistory.length === 0) return patient;
-          const nextIndex = (patient.currentFrameIndex + 1) % patient.vitalsHistory.length;
-          const currentFrame = patient.vitalsHistory[nextIndex];
-          const riskEval = evaluatePatientRisk(patient.vitalsHistory, nextIndex);
+          const targetIndex = (currentStride - 1) % patient.vitalsHistory.length;
+          const currentFrame = patient.vitalsHistory[targetIndex];
+          const riskEval = evaluatePatientRisk(patient.vitalsHistory, targetIndex);
 
           return {
             ...patient,
-            currentFrameIndex: nextIndex,
+            currentFrameIndex: targetIndex,
             currentFrame,
             hypotension: riskEval.hypotension,
             hypoxia: riskEval.hypoxia,
@@ -68,7 +78,13 @@ export default function Home() {
           };
         })
       );
-    }, 5000); // 5-second stride update
+    };
+
+    // Immediate sync on mount
+    syncTelemetry();
+
+    // Run 1-second sync tick so all tabs stay perfectly locked to system clock
+    const interval = setInterval(syncTelemetry, 1000);
 
     return () => clearInterval(interval);
   }, [patients.length, currentUser]);
