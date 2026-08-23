@@ -9,9 +9,8 @@ import { CriticalAlertBar } from '@/components/CriticalAlertBar';
 import { DispatchNotificationModal } from '@/components/DispatchNotificationModal';
 import { useAuth } from '@/context/AuthContext';
 import { PatientState } from '@/types/patient';
-import { UserAccount } from '@/types/auth';
 import { evaluatePatientRisk } from '@/utils/triageEngine';
-import { User, Lock, ArrowLeft, ShieldAlert, ChevronRight, HeartPulse, Mail } from 'lucide-react';
+import { User, Lock, ArrowLeft, ShieldAlert, HeartPulse } from 'lucide-react';
 import Link from 'next/link';
 
 interface UserPortalPageProps {
@@ -19,7 +18,7 @@ interface UserPortalPageProps {
 }
 
 export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'user1' }) => {
-  const { currentUser, users, login } = useAuth();
+  const { currentUser, login } = useAuth();
   const router = useRouter();
   const [patients, setPatients] = useState<PatientState[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
@@ -28,26 +27,10 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
   const [error, setError] = useState<string | null>(null);
   const [dismissAlertBar, setDismissAlertBar] = useState<boolean>(false);
 
-  // Filter staff users (non-admin)
-  const staffUsers = users.filter(u => u.role !== 'ADMIN');
-  
-  // Match slug to user (e.g. user1 -> User 1, user2 -> User 2)
-  const matchedUser = staffUsers.find(u => {
-    const slugNum = targetSlug.replace(/\D/g, '');
-    const userNum = u.name.replace(/\D/g, '');
-    return (slugNum && userNum && slugNum === userNum) || u.email.toLowerCase().includes(targetSlug.toLowerCase());
-  }) || staffUsers[0];
-
-  const [selectedStaffUser, setSelectedStaffUser] = useState<UserAccount | null>(matchedUser || staffUsers[0]);
+  // Manual typed login inputs for staff users (no quick buttons)
+  const [userIdInput, setUserIdInput] = useState(targetSlug);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-
-  // Update selected staff user when targetSlug changes
-  useEffect(() => {
-    if (matchedUser) {
-      setSelectedStaffUser(matchedUser);
-    }
-  }, [targetSlug]);
 
   // 1. Fetch patient data from API on mount
   useEffect(() => {
@@ -113,15 +96,17 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
 
   const handleStaffLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedStaffUser) return;
-    if (login(selectedStaffUser.email, passwordInput)) {
+    if (!userIdInput.trim()) return;
+
+    if (login(userIdInput, passwordInput)) {
       setLoginError('');
       setPasswordInput('');
-      const userNum = selectedStaffUser.name.replace(/\D/g, '');
-      const userSlug = userNum ? `user${userNum}` : 'user1';
-      router.push(`/${userSlug}`);
+      const cleanSlug = userIdInput.trim().toLowerCase().replace(/\s+/g, '');
+      const userNum = cleanSlug.replace(/\D/g, '');
+      const routeSlug = userNum ? `user${userNum}` : cleanSlug;
+      router.push(`/${routeSlug}`);
     } else {
-      setLoginError(`Incorrect password for ${selectedStaffUser.name}.`);
+      setLoginError(`Invalid User ID or Password for "${userIdInput}". Please try again.`);
     }
   };
 
@@ -131,7 +116,7 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
 
   const criticalPatients = patients.filter(p => p.triageRank === 'P1_CRITICAL');
 
-  // Gated Auth: If not logged in, prompt to select staff user (User 1, User 2, User 3, User 4) & enter password
+  // Gated Auth: If not logged in, prompt to TYPE User ID & Password manually
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
@@ -142,91 +127,59 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
               <HeartPulse className="w-7 h-7 animate-pulse text-sky-400" />
             </div>
             <h1 className="text-xl font-bold tracking-tight uppercase text-slate-100">
-              Staff Portal (`/{targetSlug}`)
+              Staff User Login
             </h1>
-            <p className="text-xs text-slate-400">Select User 1, User 2, User 3, or User 4 &amp; enter password</p>
+            <p className="text-xs text-slate-400">Type your User ID (e.g. user1, user2, user3) and password</p>
           </div>
 
-          {/* Account Selection Grid */}
-          <div className="space-y-3 pt-1">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Select Account:
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {staffUsers.map((user) => {
-                const uNum = user.name.replace(/\D/g, '');
-                const uSlug = uNum ? `user${uNum}` : 'user1';
-                const isSelected = selectedStaffUser?.id === user.id;
-
-                return (
-                  <button
-                    key={user.id}
-                    onClick={() => { setSelectedStaffUser(user); setLoginError(''); setPasswordInput(''); }}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      isSelected
-                        ? 'bg-sky-950 border-sky-500 text-sky-200 ring-2 ring-sky-500/40'
-                        : 'bg-slate-950/80 hover:bg-slate-800 border-slate-800 text-slate-300'
-                    }`}
-                  >
-                    <div className="font-bold text-xs">{user.name} (`/{uSlug}`)</div>
-                    <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Password Prompt Form */}
-          {selectedStaffUser && (
-            <div className="space-y-4 pt-2 border-t border-slate-800">
-              <div className="p-3 bg-sky-950/60 border border-sky-800 rounded-xl flex items-center space-x-3">
-                <div className="p-2 bg-sky-900 rounded-lg border border-sky-700 text-sky-300">
-                  <User className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-bold text-sky-200 text-sm">{selectedStaffUser.name}</div>
-                  <div className="text-[11px] text-sky-400">{selectedStaffUser.email}</div>
-                </div>
+          <form onSubmit={handleStaffLoginSubmit} className="space-y-4 text-xs pt-2">
+            {loginError && (
+              <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-rose-400" />
+                <span>{loginError}</span>
               </div>
+            )}
 
-              <form onSubmit={handleStaffLoginSubmit} className="space-y-4 text-xs">
-                {loginError && (
-                  <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-200 rounded-lg text-center font-medium flex items-center justify-center space-x-2">
-                    <ShieldAlert className="w-4 h-4 text-rose-400" />
-                    <span>{loginError}</span>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-slate-300 font-medium mb-1.5">
-                    Password for {selectedStaffUser.name}
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
-                    <input
-                      type="password"
-                      required
-                      autoFocus
-                      value={passwordInput}
-                      onChange={e => { setPasswordInput(e.target.value); setLoginError(''); }}
-                      placeholder="Enter password"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-sky-950"
-                >
-                  Sign In to /{selectedStaffUser.name.toLowerCase().replace(/\s+/g, '')}
-                </button>
-              </form>
+            <div>
+              <label className="block text-slate-300 font-medium mb-1.5">User ID</label>
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={userIdInput}
+                  onChange={e => { setUserIdInput(e.target.value); setLoginError(''); }}
+                  placeholder="Type User ID (e.g. user1, user2, user3, user4)"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                />
+              </div>
             </div>
-          )}
 
-          <div className="pt-1 text-center">
+            <div>
+              <label className="block text-slate-300 font-medium mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={passwordInput}
+                  onChange={e => { setPasswordInput(e.target.value); setLoginError(''); }}
+                  placeholder="Enter password"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-lg transition-colors text-sm shadow-lg shadow-sky-950"
+            >
+              Sign In as {userIdInput || 'User'}
+            </button>
+          </form>
+
+          <div className="pt-2 text-center border-t border-slate-800">
             <Link href="/" className="text-xs text-slate-400 hover:text-slate-200 inline-flex items-center">
               <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Main Portal Choice
             </Link>
@@ -246,7 +199,8 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
     );
   }
 
-  const currentSlug = `user${currentUser.name.replace(/\D/g, '') || '1'}`;
+  const userNumber = currentUser.name.replace(/\D/g, '') || '1';
+  const currentSlug = `user${userNumber}`;
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">

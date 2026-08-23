@@ -35,86 +35,53 @@ export default function Home() {
           </div>
         )}
 
-        {/* Front Portal Selection Buttons */}
-        <div className="space-y-3 pt-2">
-          <div className="text-center text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+        {/* Front Portal Selection Buttons (ONLY Admin & User) */}
+        <div className="space-y-4 pt-2">
+          <div className="text-center text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Select Access Portal
           </div>
 
-          {/* Go to Admin Portal */}
+          {/* Option 1: Admin */}
           <Link
             href="/admin"
-            className="w-full p-3.5 bg-rose-950/40 hover:bg-rose-950/80 border border-rose-900/80 hover:border-rose-600 rounded-xl text-left transition-all duration-200 group flex items-center justify-between block"
+            className="w-full p-4 bg-rose-950/40 hover:bg-rose-950/80 border border-rose-900/80 hover:border-rose-600 rounded-xl text-left transition-all duration-200 group flex items-center justify-between block"
           >
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-rose-900/60 rounded-lg border border-rose-700 text-rose-300 group-hover:scale-105 transition-transform">
-                <Shield className="w-5 h-5 text-rose-300" />
+              <div className="p-2.5 bg-rose-900/60 rounded-lg border border-rose-700 text-rose-300 group-hover:scale-105 transition-transform">
+                <Shield className="w-6 h-6 text-rose-300" />
               </div>
               <div>
-                <div className="font-bold text-slate-100 group-hover:text-rose-300 transition-colors text-xs">
-                  Administrator Portal (`/admin`)
+                <div className="font-bold text-slate-100 group-hover:text-rose-300 transition-colors text-sm">
+                  Admin
                 </div>
                 <div className="text-[11px] text-slate-400">
-                  User creation, session monitor, &amp; patient dispatching
+                  System Administrator Login &amp; Dispatch Console (`/admin`)
                 </div>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-rose-400 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-5 h-5 text-rose-400 group-hover:translate-x-1 transition-transform" />
           </Link>
 
-          {/* Staff User Routes (/user1, /user2, /user3, /user4) */}
-          <div className="space-y-2 pt-1">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Staff User Portals (`/user1` to `/user4`):
+          {/* Option 2: User */}
+          <Link
+            href="/user"
+            className="w-full p-4 bg-sky-950/40 hover:bg-sky-950/80 border border-sky-900/80 hover:border-sky-600 rounded-xl text-left transition-all duration-200 group flex items-center justify-between block"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-sky-900/60 rounded-lg border border-sky-700 text-sky-300 group-hover:scale-105 transition-transform">
+                <User className="w-6 h-6 text-sky-300" />
+              </div>
+              <div>
+                <div className="font-bold text-slate-100 group-hover:text-sky-300 transition-colors text-sm">
+                  User
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  Staff User Login (type user1, user2, user3, user4...)
+                </div>
+              </div>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/user1"
-                className="p-3 bg-sky-950/40 hover:bg-sky-900/60 border border-sky-900/80 hover:border-sky-600 rounded-xl text-left transition-all group flex items-center justify-between block"
-              >
-                <div>
-                  <div className="font-bold text-slate-100 group-hover:text-sky-300 text-xs">User 1 (`/user1`)</div>
-                  <div className="text-[10px] text-slate-400">user1@hospital.com</div>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-
-              <Link
-                href="/user2"
-                className="p-3 bg-sky-950/40 hover:bg-sky-900/60 border border-sky-900/80 hover:border-sky-600 rounded-xl text-left transition-all group flex items-center justify-between block"
-              >
-                <div>
-                  <div className="font-bold text-slate-100 group-hover:text-sky-300 text-xs">User 2 (`/user2`)</div>
-                  <div className="text-[10px] text-slate-400">user2@hospital.com</div>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-
-              <Link
-                href="/user3"
-                className="p-3 bg-sky-950/40 hover:bg-sky-900/60 border border-sky-900/80 hover:border-sky-600 rounded-xl text-left transition-all group flex items-center justify-between block"
-              >
-                <div>
-                  <div className="font-bold text-slate-100 group-hover:text-sky-300 text-xs">User 3 (`/user3`)</div>
-                  <div className="text-[10px] text-slate-400">user3@hospital.com</div>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-
-              <Link
-                href="/user4"
-                className="p-3 bg-sky-950/40 hover:bg-sky-900/60 border border-sky-900/80 hover:border-sky-600 rounded-xl text-left transition-all group flex items-center justify-between block"
-              >
-                <div>
-                  <div className="font-bold text-slate-100 group-hover:text-sky-300 text-xs">User 4 (`/user4`)</div>
-                  <div className="text-[10px] text-slate-400">user4@hospital.com</div>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-          </div>
-
+            <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
       </div>
