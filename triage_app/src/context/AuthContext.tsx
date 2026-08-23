@@ -28,26 +28,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [assignments, setAssignments] = useState<PatientDispatchAssignment[]>([]);
 
-  // Load state from localStorage on mount
+  // Load state on mount: Users & Assignments from localStorage, Session from sessionStorage
   useEffect(() => {
+    // 1. Users list (shared across tabs)
     const savedUsers = localStorage.getItem('silabs_users');
     if (savedUsers) {
       try { setUsers(JSON.parse(savedUsers)); } catch (e) {}
+    } else {
+      localStorage.setItem('silabs_users', JSON.stringify(DEFAULT_USERS));
     }
-    const savedCurUser = localStorage.getItem('silabs_current_user');
+
+    // 2. Current User session (isolated per tab)
+    const savedCurUser = sessionStorage.getItem('silabs_current_user') || localStorage.getItem('silabs_current_user');
     if (savedCurUser) {
       try { setCurrentUser(JSON.parse(savedCurUser)); } catch (e) {}
     }
+
+    // 3. Dispatch assignments (shared across tabs)
     const savedAssignments = localStorage.getItem('silabs_assignments');
     if (savedAssignments) {
       try { setAssignments(JSON.parse(savedAssignments)); } catch (e) {}
     }
+
+    // Listen for storage changes across tabs (live dispatch notifications)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'silabs_assignments' && e.newValue) {
+        try { setAssignments(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'silabs_users' && e.newValue) {
+        try { setUsers(JSON.parse(e.newValue)); } catch (err) {}
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = (email: string, pass: string): boolean => {
     const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
     if (found) {
       setCurrentUser(found);
+      sessionStorage.setItem('silabs_current_user', JSON.stringify(found));
       localStorage.setItem('silabs_current_user', JSON.stringify(found));
       return true;
     }
@@ -56,6 +77,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     setCurrentUser(null);
+    sessionStorage.removeItem('silabs_current_user');
     localStorage.removeItem('silabs_current_user');
   };
 
