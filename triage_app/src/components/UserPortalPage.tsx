@@ -52,18 +52,17 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
     loadPatients();
   }, []);
 
-  // 2. Master Synchronized 5-Second Stride Clock Loop
+  // 2. Master Synchronized 5-Second Stride Clock Loop with Dynamic Re-Sync Listener
   useEffect(() => {
     if (patients.length === 0 || !currentUser) return;
 
-    let masterStartTime = localStorage.getItem('silabs_master_start_time');
-    if (!masterStartTime) {
-      masterStartTime = String(Date.now());
-      localStorage.setItem('silabs_master_start_time', masterStartTime);
-    }
-    const startTimeNum = parseInt(masterStartTime, 10);
-
     const syncTelemetry = () => {
+      let masterStartTime = localStorage.getItem('silabs_master_start_time');
+      if (!masterStartTime) {
+        masterStartTime = String(Date.now());
+        localStorage.setItem('silabs_master_start_time', masterStartTime);
+      }
+      const startTimeNum = parseInt(masterStartTime, 10);
       const elapsedMs = Math.max(0, Date.now() - startTimeNum);
       const currentStride = Math.floor(elapsedMs / 5000) + 1;
       setStrideCount(currentStride);
@@ -91,7 +90,21 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
 
     syncTelemetry();
     const interval = setInterval(syncTelemetry, 1000);
-    return () => clearInterval(interval);
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'silabs_master_start_time') {
+        syncTelemetry();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener('silabs_resync', syncTelemetry);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('silabs_resync', syncTelemetry);
+    };
   }, [patients.length, currentUser]);
 
   const handleStaffLoginSubmit = (e: React.FormEvent) => {

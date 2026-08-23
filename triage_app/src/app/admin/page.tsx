@@ -46,18 +46,17 @@ export default function AdminPage() {
     loadPatients();
   }, []);
 
-  // 2. Master Synchronized 5-Second Stride Clock Loop
+  // 2. Master Synchronized 5-Second Stride Clock Loop with Dynamic Re-Sync Listener
   useEffect(() => {
     if (patients.length === 0 || !currentUser) return;
 
-    let masterStartTime = localStorage.getItem('silabs_master_start_time');
-    if (!masterStartTime) {
-      masterStartTime = String(Date.now());
-      localStorage.setItem('silabs_master_start_time', masterStartTime);
-    }
-    const startTimeNum = parseInt(masterStartTime, 10);
-
     const syncTelemetry = () => {
+      let masterStartTime = localStorage.getItem('silabs_master_start_time');
+      if (!masterStartTime) {
+        masterStartTime = String(Date.now());
+        localStorage.setItem('silabs_master_start_time', masterStartTime);
+      }
+      const startTimeNum = parseInt(masterStartTime, 10);
       const elapsedMs = Math.max(0, Date.now() - startTimeNum);
       const currentStride = Math.floor(elapsedMs / 5000) + 1;
       setStrideCount(currentStride);
@@ -85,7 +84,21 @@ export default function AdminPage() {
 
     syncTelemetry();
     const interval = setInterval(syncTelemetry, 1000);
-    return () => clearInterval(interval);
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'silabs_master_start_time') {
+        syncTelemetry();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener('silabs_resync', syncTelemetry);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('silabs_resync', syncTelemetry);
+    };
   }, [patients.length, currentUser]);
 
   const handleAdminLoginSubmit = (e: React.FormEvent) => {
@@ -96,6 +109,12 @@ export default function AdminPage() {
     } else {
       setAdminLoginError('Incorrect Administrator password.');
     }
+  };
+
+  const handleReSyncClock = () => {
+    const now = String(Date.now());
+    localStorage.setItem('silabs_master_start_time', now);
+    window.dispatchEvent(new CustomEvent('silabs_resync'));
   };
 
   const selectedPatient = selectedPatientId
@@ -181,13 +200,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const handleReSyncClock = () => {
-    const now = String(Date.now());
-    localStorage.setItem('silabs_master_start_time', now);
-    window.dispatchEvent(new Event('storage'));
-    setStrideCount(1);
-  };
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col">
