@@ -24,9 +24,19 @@ function getDeviceEpoch(dev: any): number {
 
 export async function GET() {
   try {
-    const dataDir = path.join(process.cwd(), '../patient_labeled_data');
-    if (!fs.existsSync(dataDir)) {
-      return NextResponse.json({ error: `Directory ${dataDir} not found` }, { status: 404 });
+    const candidatePaths = [
+      path.join(process.cwd(), 'triage_frontend_data_csv'),
+      path.join(process.cwd(), 'patient_labeled_data'),
+      path.join(process.cwd(), '../patient_raw_data'),
+      path.join(process.cwd(), 'patient_raw_data'),
+      path.join(process.cwd(), '../patient_labeled_data'),
+      path.join(process.cwd(), '../../patient_raw_data'),
+      path.join(process.cwd(), '../../patient_labeled_data'),
+    ];
+
+    const dataDir = candidatePaths.find(p => fs.existsSync(p));
+    if (!dataDir) {
+      return NextResponse.json({ error: 'Patient data directory not found' }, { status: 404 });
     }
 
     const files = fs.readdirSync(dataDir)
