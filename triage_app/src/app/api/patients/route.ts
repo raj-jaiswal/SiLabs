@@ -27,11 +27,7 @@ export async function GET() {
     const candidatePaths = [
       path.join(process.cwd(), 'triage_frontend_data_csv'),
       path.join(process.cwd(), 'patient_labeled_data'),
-      path.join(process.cwd(), '../patient_raw_data'),
       path.join(process.cwd(), 'patient_raw_data'),
-      path.join(process.cwd(), '../patient_labeled_data'),
-      path.join(process.cwd(), '../../patient_raw_data'),
-      path.join(process.cwd(), '../../patient_labeled_data'),
     ];
 
     const dataDir = candidatePaths.find(p => fs.existsSync(p));
