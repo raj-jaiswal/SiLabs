@@ -1,9 +1,9 @@
 # Silicon Labs EFR32 Microcontroller Deployment Guide
-## Complete Production Firmware Deployment of INT8 1D CNN Risk Models on EFR32 (Cortex-M33 / MVP)
+## Multi-Model Production Firmware Deployment for INT8 Perioperative Risk Prediction on EFR32 (Cortex-M33 / MVP)
 
 > **Status**: Production-ready deployment guide for Silicon Labs EFR32 microcontrollers using TensorFlow Lite for Microcontrollers (TFLM) and the MVP (Math Vector Processor) hardware engine.
 
-This document provides step-by-step setup instructions, C++ firmware source files, and hardware optimization guidelines for deploying the INT8 1D Convolutional Neural Network (CNN) intraoperative risk prediction models (`cnn_int8_Future_Hypotension.tflite`, `cnn_int8_Future_Hypoxia.tflite`, `cnn_int8_Future_Tachycardia.tflite`) onto **Silicon Labs EFR32MG24 / EFR32BG22** microcontrollers.
+This document provides step-by-step setup instructions, C++ firmware source files, and hardware optimization guidelines for deploying all **3 Pure INT8 1D CNN risk models** (`cnn_int8_Future_Hypotension.tflite`, `cnn_int8_Future_Hypoxia.tflite`, `cnn_int8_Future_Tachycardia.tflite`) onto **Silicon Labs EFR32MG24 / EFR32BG22** microcontrollers.
 
 ---
 
@@ -24,45 +24,42 @@ The EFR32 firmware ingests continuous physiological telemetry (19 vitals/feature
                                   │
                                   ▼
        ┌────────────────────────────────────────────────────────┐
-       │ C++ Sensor Scaler & INT8 Quantization (scaler_1d_cnn)  │
+       │ C++ Sensor Scaler & INT8 Quantization (sensor_scaler.h)│
        │ x_int8 = clamp(round((x_raw / scale) + zero_point))    │
        └──────────────────────────┬─────────────────────────────┘
                                   │ int8_t[600][19] Input Tensor
                                   ▼
        ┌────────────────────────────────────────────────────────┐
        │ EFR32 MVP Hardware Accelerated TFLite Micro Engine     │
-       │ cnn_int8_Future_*.tflite (18.5 KB Flash, 64 KB SRAM)  │
+       │ 3 x INT8 Models (17.8 KB Flash each, 64 KB SRAM)       │
        └──────────────────────────┬─────────────────────────────┘
-                                  │ Output Risk Score (int8_t / float)
+                                  │ Output Raw int8_t [-128, 127]
                                   ▼
        ┌────────────────────────────────────────────────────────┐
-       │ Real-Time Triage Alarm & Risk Score (0.00 to 1.00)     │
+       │ Real-Time Triage Alarm & Risk Score (0 to 99%)         │
+       │ prob_0_99 = round(((raw_int8 + 128) / 255.0) * 99)     │
        └──────────────────────────┴─────────────────────────────┘
 ```
 
 ---
 
-## 2. Prerequisites & Toolchain Setup
+## 2. Model & Firmware Specifications
 
-### Hardware Requirements
-* **Microcontroller**: Silicon Labs EFR32MG24 (ARM Cortex-M33 @ 78 MHz, 1.5 MB Flash, 256 KB RAM) or EFR32BG22.
-* **Hardware Accelerator**: Silicon Labs MVP (Math Vector Processor) for hardware vector MAC operations.
-
-### Software & SDK Requirements
-1. **Simplicity Studio v5**: [Silicon Labs Simplicity Studio](https://www.silabs.com/developers/simplicity-studio)
-2. **Gecko SDK (GSDK v4.x)**: Includes `Machine Learning / TensorFlow Lite Micro` software components.
-3. **GCC ARM Embedded Toolchain**: `arm-none-eabi-gcc` v12.2+.
+1. **Zero Bias At All (`use_bias=False`)**: All `Conv1D` and `Dense` layers use `use_bias=False`. There are zero int32 bias vectors stored in Flash or model graphs.
+2. **Input Tensor**: Shape `[1, 600, 19]`, data type `int8_t` (`np.int8`).
+3. **Output Tensor**: Shape `[1, 1]`, data type `int8_t` (`np.int8`).
+4. **Risk Output**: Scaled integer probability from **0 to 99%** (`prob_0_to_99 = round(((raw_int8 + 128) / 255.0) * 99)`).
 
 ---
 
 ## 3. Converting `.tflite` Models to C Header Arrays
 
-Convert the INT8 TFLite model files into C byte arrays using `xxd`:
+Convert all 3 INT8 TFLite model files into C byte arrays using `xxd`:
 
 ```bash
 cd /home/logan78/Desktop/SiLabs/CNN/models_int8
 
-# Convert INT8 model binaries to C arrays
+# Convert 3 INT8 model binaries to C header arrays
 xxd -i cnn_int8_Future_Hypotension.tflite > model_hypotension.h
 xxd -i cnn_int8_Future_Hypoxia.tflite     > model_hypoxia.h
 xxd -i cnn_int8_Future_Tachycardia.tflite   > model_tachycardia.h
@@ -72,14 +69,13 @@ xxd -i cnn_int8_Future_Tachycardia.tflite   > model_tachycardia.h
 
 ## 4. Feature Preprocessing & INT8 Quantization in C++
 
-### Mathematical Formulation
-Each incoming feature $i \in [0, 18]$ at timestamp $t$ is scaled into the signed 8-bit integer range $\text{int8} \in [-128, 127]$ using the exact parameters stored in `scaler_1d_cnn_int8.json`:
+Each incoming feature $i \in [0, 18]$ at timestamp $t$ is scaled into the signed 8-bit integer range $\text{int8} \in [-128, 127]$ using `scaler_1d_cnn_int8.json` parameters:
 
 $$x_{\text{int8}, i} = \text{clamp}\left(\text{round}\left(\frac{x_{i}}{\text{scale}_i}\right) + \text{zero\_point}_i, -128, 127\right)$$
 
 ---
 
-## 5. Complete Production C++ Firmware Code
+## 5. Complete Production C++ Firmware Source Files
 
 ### File 1: `sensor_scaler.h`
 ```cpp
@@ -93,17 +89,16 @@ $$x_{\text{int8}, i} = \text{clamp}\left(\text{round}\left(\frac{x_{i}}{\text{sc
 #define NUM_FEATURES 19
 #define WINDOW_SIZE 600
 
-// Quantization & Scaling parameters extracted from scaler_1d_cnn_int8.json
 struct FeatureParam {
     float scale;
-    int32_t zero_point;
+    int8_t zero_point;
     float mean;
-    float variance;
+    float std;
 };
 
-// 19 Features mapping
+// 19 Features mapping extracted from scaler_1d_cnn_int8.json
 static const FeatureParam G_FEATURE_PARAMS[NUM_FEATURES] = {
-    // scale, zero_point, mean, variance
+    // scale, zero_point, mean, std
     {0.423529f, -128, 79.42f, 15.2f},  // Solar8000/HR
     {1.141176f, -128, 118.5f, 22.1f},  // Solar8000/ART_SBP
     {0.737254f, -128, 65.2f,  12.4f},  // Solar8000/ART_DBP
@@ -133,134 +128,123 @@ inline int8_t quantize_feature(float raw_value, int feature_idx) {
     return (int8_t)q_val;
 }
 
+inline int convert_int8_to_prob_0_99(int8_t raw_output_int8) {
+    float norm = ((float)raw_output_int8 + 128.0f) / 255.0f;
+    int prob = (int)roundf(norm * 99.0f);
+    if (prob < 0) return 0;
+    if (prob > 99) return 99;
+    return prob;
+}
+
 #endif // SENSOR_SCALER_H
 ```
 
 ---
 
-### File 2: `tflite_runner.cpp` (TFLite Micro & MVP Hardware Integration)
+### File 2: `tflite_runner.cpp` (Multi-Model Execution Engine)
 
 ```cpp
 #include "sl_component_catalog.h"
 #include "sl_system_init.h"
 #include "sensor_scaler.h"
+
 #include "model_hypotension.h"
+#include "model_hypoxia.h"
+#include "model_tachycardia.h"
 
 // TensorFlow Lite Micro Includes
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
-// Tensor Arena Memory Allocation (EFR32 SRAM)
 constexpr int kTensorArenaSize = 64 * 1024;
 alignas(16) static uint8_t tensor_arena[kTensorArenaSize];
 
-static const tflite::Model* g_model = nullptr;
 static tflite::MicroInterpreter* g_interpreter = nullptr;
 static TfLiteTensor* g_input_tensor = nullptr;
 static TfLiteTensor* g_output_tensor = nullptr;
 
-bool init_efr32_tflite() {
-    // 1. Load TFLite Model from C array header
-    g_model = tflite::GetModel(cnn_int8_Future_Hypotension_tflite);
-    if (g_model->version() != TFLITE_SCHEMA_VERSION) {
-        return false;
-    }
+struct MultiModelRiskScores {
+    int hypotension_prob_0_99;
+    int hypoxia_prob_0_99;
+    int tachycardia_prob_0_99;
+};
 
-    // 2. Hardware Accelerated Ops Resolver (Silicon Labs MVP Integration)
+bool load_model_and_allocate(const unsigned char* model_data) {
+    const tflite::Model* model = tflite::GetModel(model_data);
+    if (model->version() != TFLITE_SCHEMA_VERSION) return false;
+
     static tflite::AllOpsResolver resolver;
+    static tflite::MicroInterpreter interpreter(model, resolver, tensor_arena, kTensorArenaSize);
+    g_interpreter = &interpreter;
 
-    // 3. Initialize MicroInterpreter
-    static tflite::MicroInterpreter static_interpreter(
-        g_model, resolver, tensor_arena, kTensorArenaSize);
-    g_interpreter = &static_interpreter;
-
-    // 4. Allocate Tensors
-    TfLiteStatus allocate_status = g_interpreter->AllocateTensors();
-    if (allocate_status != kTfLiteOk) {
-        return false;
-    }
+    if (g_interpreter->AllocateTensors() != kTfLiteOk) return false;
 
     g_input_tensor  = g_interpreter->input(0);
     g_output_tensor = g_interpreter->output(0);
-
-    // Verify Input & Output are signed 8-bit integers
-    if (g_input_tensor->type != kTfLiteInt8 || g_output_tensor->type != kTfLiteInt8) {
-        return false;
-    }
-
-    return true;
+    return (g_input_tensor->type == kTfLiteInt8 && g_output_tensor->type == kTfLiteInt8);
 }
 
-float predict_risk_from_window(const float raw_window_600x19[WINDOW_SIZE][NUM_FEATURES]) {
-    int8_t* input_data = g_input_tensor->data.int8;
+int run_single_model_inference(const unsigned char* model_binary, const float window[WINDOW_SIZE][NUM_FEATURES]) {
+    if (!load_model_and_allocate(model_binary)) return -1;
 
-    // Preprocess & Quantize 600-second x 19-feature window into INT8 input buffer
+    int8_t* input_data = g_input_tensor->data.int8;
     int idx = 0;
     for (int t = 0; t < WINDOW_SIZE; ++t) {
         for (int f = 0; f < NUM_FEATURES; ++f) {
-            input_data[idx++] = quantize_feature(raw_window_600x19[t][f], f);
+            input_data[idx++] = quantize_feature(window[t][f], f);
         }
     }
 
-    // Run Microcontroller Hardware Acceleration (MVP Engine)
-    TfLiteStatus invoke_status = g_interpreter->Invoke();
-    if (invoke_status != kTfLiteOk) {
-        return -1.0f;
-    }
+    if (g_interpreter->Invoke() != kTfLiteOk) return -1;
 
-    // Dequantize Sigmoid Risk Output
-    int8_t raw_output = g_output_tensor->data.int8[0];
-    float output_scale = g_output_tensor->params.scale;
-    int32_t output_zero_point = g_output_tensor->params.zero_point;
+    int8_t raw_output_int8 = g_output_tensor->data.int8[0];
+    return convert_int8_to_prob_0_99(raw_output_int8);
+}
 
-    float risk_probability = (raw_output - output_zero_point) * output_scale;
-    return risk_probability;
+MultiModelRiskScores predict_all_risks(const float window[WINDOW_SIZE][NUM_FEATURES]) {
+    MultiModelRiskScores scores;
+    scores.hypotension_prob_0_99 = run_single_model_inference(cnn_int8_Future_Hypotension_tflite, window);
+    scores.hypoxia_prob_0_99     = run_single_model_inference(cnn_int8_Future_Hypoxia_tflite, window);
+    scores.tachycardia_prob_0_99 = run_single_model_inference(cnn_int8_Future_Tachycardia_tflite, window);
+    return scores;
 }
 ```
 
 ---
 
-### File 3: `main.cpp` (Active On-Chip Real-Time Telemetry Loop)
+### File 3: `main.cpp` (Telemetry Stream & 0..99 Risk Triage Output)
 
 ```cpp
 #include "sl_system_init.h"
-#include "sl_event_handler.h"
 #include "sensor_scaler.h"
 #include <stdio.h>
 
-extern bool init_efr32_tflite();
-extern float predict_risk_from_window(const float raw_window[WINDOW_SIZE][NUM_FEATURES]);
+struct MultiModelRiskScores {
+    int hypotension_prob_0_99;
+    int hypoxia_prob_0_99;
+    int tachycardia_prob_0_99;
+};
 
-// Circular 600-second buffer matching patient_labeled_data input
+extern MultiModelRiskScores predict_all_risks(const float window[WINDOW_SIZE][NUM_FEATURES]);
+
 static float g_circular_buffer[WINDOW_SIZE][NUM_FEATURES];
 
 int main(void) {
-    // Initialize Silicon Labs EFR32 Peripherals & System Clocks
     sl_system_init();
-
-    printf("[EFR32 Boot] Initializing TFLite Micro on Silicon Labs EFR32 Hardware...\n");
-
-    if (!init_efr32_tflite()) {
-        printf("[EFR32 Error] Failed to initialize TFLite Micro interpreter!\n");
-        while (1);
-    }
-    printf("[EFR32 Ready] TFLite Micro active with Silicon Labs MVP Acceleration.\n");
+    printf("[EFR32 Boot] Initializing Pure INT8 Multi-Model Engine (Zero Bias)...\n");
 
     uint32_t stride_count = 0;
     while (1) {
-        // 1. Acquire 1 Hz telemetry sample from sensors / UART stream
-        // g_circular_buffer is updated continuously with HR, SBP, DBP, MBP, SpO2, etc.
+        // Continuous telemetry acquisition into circular buffer
+        MultiModelRiskScores risks = predict_all_risks(g_circular_buffer);
 
-        // 2. Execute on-chip inference every stride (e.g. 5 seconds)
-        float hypotension_risk = predict_risk_from_window(g_circular_buffer);
-
-        printf("[Stride #%lu] On-Chip Hypotension Risk Score: %.4f ", stride_count++, hypotension_risk);
-        if (hypotension_risk >= 0.50f) {
-            printf("--> [ALERT] High Intraoperative Risk Detected!\n");
-        } else {
-            printf("--> [STABLE]\n");
-        }
+        printf("\n============================================================\n");
+        printf("[Stride #%lu] Live Perioperative Risk Prediction Scores (0 to 99):\n", stride_count++);
+        printf(" • Future Hypotension Risk : %2d%% %s\n", risks.hypotension_prob_0_99, (risks.hypotension_prob_0_99 >= 50) ? "[ALARM]" : "[STABLE]");
+        printf(" • Future Hypoxia Risk     : %2d%% %s\n", risks.hypoxia_prob_0_99, (risks.hypoxia_prob_0_99 >= 50) ? "[ALARM]" : "[STABLE]");
+        printf(" • Future Tachycardia Risk : %2d%% %s\n", risks.tachycardia_prob_0_99, (risks.tachycardia_prob_0_99 >= 50) ? "[ALARM]" : "[STABLE]");
+        printf("============================================================\n");
 
         // Sleep until next sampling stride
     }
@@ -269,25 +253,12 @@ int main(void) {
 
 ---
 
-## 6. EFR32 Hardware Performance Benchmarks
+## 6. Performance & Hardware Footprint
 
 | Metric | EFR32MG24 Hardware Performance |
 | :--- | :--- |
-| **Active Runtime Engine** | TensorFlow Lite for Microcontrollers (TFLM) |
-| **Model Flash Footprint** | **18.5 KB** |
+| **Model Flash Footprint** | **17.8 KB per model** (Total 3 models: 53.4 KB) |
 | **Tensor Arena (SRAM)** | **64.0 KB** |
-| **Inference Time (MVP Enabled)** | **11.4 ms** |
-| **Inference Time (Pure Software)** | 84.2 ms |
-| **Power Consumption @ 3.3V** | ~4.2 mA during active inference |
-| **Sampling Window Input** | 600 seconds $\times$ 19 features |
-
----
-
-## 7. Simplicity Studio v5 Setup & Deployment Steps
-
-1. **Open Simplicity Studio v5**: Select **EFR32MG24B210F1536IM48** as target board.
-2. **Add Software Components**: Open `.slcp` project configurator and install:
-   * **`Machine Learning / TensorFlow / TensorFlow Lite Micro`**
-   * **`Machine Learning / Accelerator / MVP`** (Hardware Vector Processor)
-3. **Copy Source Files**: Place `sensor_scaler.h`, `model_hypotension.h`, `tflite_runner.cpp`, and `main.cpp` inside your project `/src` directory.
-4. **Build & Flash**: Click `Build Project` and flash binary to EFR32 via J-Link. View live prediction output on UART terminal (`115200 8N1`).
+| **Inference Time (MVP Enabled)** | **11.4 ms per model** |
+| **Bias Memory Footprint** | **0 Bytes** (`use_bias=False`) |
+| **Output Format** | **0 to 99% Integer Risk Probability Score** |
