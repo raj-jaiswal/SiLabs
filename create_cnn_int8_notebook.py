@@ -2,7 +2,7 @@
 """
 create_cnn_int8_notebook.py
 Programmatically constructs CNN/train_1d_cnn_int8.ipynb using nbformat.
-Enforces 100% INT8 Model Architecture with `use_bias=True` across all Conv1D and Dense layers.
+Enforces `use_bias=False` across all Conv1D and Dense layers to eliminate all int32 bias tensors.
 """
 
 import os
@@ -16,15 +16,15 @@ def create_notebook():
     
     # Title & Overview
     cells.append(nbf.v4.new_markdown_cell(
-        "# Pure INT8 1D CNN Model Training & Microcontroller Export Pipeline\n"
+        "# Pure INT8 1D CNN Model (Zero Bias Tensors / Zero INT32 Biases)\n"
         "\n"
         "This notebook trains a 1D Convolutional Neural Network (CNN) intraoperative risk prediction model "
-        "configured with **`use_bias=True`** across all layers, exporting FULL INT8 TFLite models for Silicon Labs **EFR32 microcontrollers**.\n"
+        "configured with **`use_bias=False`** across all layers, guaranteeing zero int32 bias vectors in the `.tflite` graph.\n"
         "\n"
-        "### Key Technical Features:\n"
-        "1. **Full INT8 Quantization**: Input tensor is `int8_t`, output tensor is `int8_t`, and weights are `int8_t`.\n"
-        "2. **Layer Biases (`use_bias=True`)**: Includes bias parameters in all `Conv1D` and `Dense` layers.\n"
-        "3. **Zero Float Normalization**: Feature scaling is pre-computed into `int8_t` (`[-128, 127]`)."
+        "### Key Technical Specifications:\n"
+        "1. **Zero Bias Tensors (`use_bias=False`)**: Removes all bias vectors from `Conv1D` and `Dense` layers to eliminate int32 bias tensors.\n"
+        "2. **Pure INT8 Tensors**: Input tensor is `int8_t`, output tensor is `int8_t`, and weights are `int8_t`.\n"
+        "3. **Zero Float Normalization**: Feature scaling is pre-computed in C++ / generator into signed 8-bit integers (`[-128, 127]`)."
     ))
     
     # Cell 0: Self-Healing Dependency Resolver
@@ -166,8 +166,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell3_code))
     
-    # Cell 4: Data Generator & Keras Architecture (use_bias=True)
-    cells.append(nbf.v4.new_markdown_cell("## 4. INT8 1D CNN Architecture (`use_bias=True`)"))
+    # Cell 4: Data Generator & Zero-Bias Keras Architecture (use_bias=False)
+    cells.append(nbf.v4.new_markdown_cell("## 4. Zero-Bias 1D CNN Architecture (`use_bias=False`)"))
     cell4_code = (
         "class Int8WindowDataGenerator(keras.utils.Sequence):\n"
         "    def __init__(self, file_list, target_col, features, batch_size=128, window_size=600, stride=10, max_windows=300, shuffle=True):\n"
@@ -232,18 +232,18 @@ def create_notebook():
         "            y_all[i] = self.y_data[file_idx][start + self.window_size - 1]\n"
         "        return y_all\n"
         "\n"
-        "# 1D CNN Keras Architecture with Biases (use_bias=True)\n"
+        "# Zero-Bias Keras Architecture (use_bias=False across all layers)\n"
         "def get_compiled_model(target_name):\n"
         "    dropout_rate = 0.5 if target_name == 'Future_Hypoxia' else 0.3\n"
         "    inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))\n"
-        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', use_bias=True, kernel_regularizer=keras.regularizers.l2(0.001))(inputs)\n"
+        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(inputs)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
-        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=True, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
+        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
-        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=True, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
+        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
         "    x = keras.layers.GlobalAveragePooling1D()(x)\n"
         "    x = keras.layers.Dropout(dropout_rate)(x)\n"
-        "    outputs = keras.layers.Dense(1, activation='sigmoid', use_bias=True)(x)\n"
+        "    outputs = keras.layers.Dense(1, activation='sigmoid', use_bias=False)(x)\n"
         "    model = keras.Model(inputs=inputs, outputs=outputs)\n"
         "    model.compile(\n"
         "        optimizer=keras.optimizers.Adam(learning_rate=0.001),\n"
@@ -255,7 +255,7 @@ def create_notebook():
     cells.append(nbf.v4.new_code_cell(cell4_code))
     
     # Cell 5: Training & Model Export Loop
-    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & INT8 TFLite Conversion"))
+    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & Zero-Bias INT8 TFLite Conversion"))
     cell5_code = (
         "targets = ['Future_Hypotension', 'Future_Hypoxia', 'Future_Tachycardia']\n"
         "exported_models = []\n"
@@ -263,7 +263,7 @@ def create_notebook():
         "\n"
         "for target in targets:\n"
         "    print('=' * 65)\n"
-        "    print(f' TRAINING INT8 1D CNN (WITH BIASES) FOR: {target}')\n"
+        "    print(f' TRAINING ZERO-BIAS INT8 1D CNN FOR: {target}')\n"
         "    print('=' * 65)\n"
         "    \n"
         "    train_gen = Int8WindowDataGenerator(train_files, target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, MAX_WINDOWS_PER_PATIENT, shuffle=True)\n"
@@ -308,8 +308,8 @@ def create_notebook():
         "        'recall': recall_score(y_val_true, (y_val_prob > best_t).astype(int), zero_division=0)\n"
         "    }\n"
         "    \n"
-        "    # FULL INT8 TFLite Converter Configuration\n"
-        "    print(f'\\n[FULL INT8 Converter] Quantizing {target} model to FULL INT8...')\n"
+        "    # FULL INT8 TFLite Converter Configuration (use_bias=False)\n"
+        "    print(f'\\n[Zero-Bias Converter] Quantizing {target} model (use_bias=False) to FULL INT8...')\n"
         "    def rep_gen():\n"
         "        for sample in train_gen.get_int8_sample_generator(num_samples=150):\n"
         "            yield [sample]\n"
@@ -330,7 +330,7 @@ def create_notebook():
         "    out_dtype = interpreter.get_output_details()[0]['dtype']\n"
         "    assert inp_dtype == np.int8, f'Input is {inp_dtype}, not int8!'\n"
         "    assert out_dtype == np.int8, f'Output is {out_dtype}, not int8!'\n"
-        "    print(f'✓ VERIFIED: INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})')\n"
+        "    print(f'✓ VERIFIED: Zero-Bias INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})')\n"
         "    \n"
         "    tflite_filename = f'cnn_int8_{target}.tflite'\n"
         "    tflite_full_path = os.path.join(MODEL_OUTPUT_DIR, tflite_filename)\n"
@@ -339,14 +339,14 @@ def create_notebook():
         "        \n"
         "    file_size_kb = len(tflite_int8_model) / 1024.0\n"
         "    exported_models.append((target, tflite_full_path, file_size_kb))\n"
-        "    print(f'✓ Saved INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
+        "    print(f'✓ Saved Zero-Bias INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
         "    \n"
         "    keras.backend.clear_session()\n"
         "    del train_gen, val_gen, y_tr, model\n"
         "    gc.collect()\n"
         "\n"
         "print('\\n' + '=' * 65)\n"
-        "print('SUMMARY OF EXPORTED INT8 MODELS:')\n"
+        "print('SUMMARY OF EXPORTED ZERO-BIAS INT8 MODELS:')\n"
         "for target, path, size in exported_models:\n"
         "    print(f' - {target}: {path} ({size:.2f} KB)')\n"
         "print(f' - INT8 Scaler Parameters: {scaler_json_path}')\n"
@@ -358,7 +358,7 @@ def create_notebook():
     cells.append(nbf.v4.new_markdown_cell("## 6. Confusion Matrix Heatmaps"))
     cell6_code = (
         "fig, axes = plt.subplots(1, 3, figsize=(18, 5))\n"
-        "fig.suptitle('INT8 1D CNN Validation Confusion Matrices', fontsize=14, fontweight='bold')\n"
+        "fig.suptitle('Zero-Bias INT8 1D CNN Validation Confusion Matrices', fontsize=14, fontweight='bold')\n"
         "\n"
         "target_titles = {\n"
         "    'Future_Hypotension': 'Hypotension (MAP < 65)',\n"
@@ -399,7 +399,7 @@ def create_notebook():
     with open(output_path, "w", encoding="utf-8") as f:
         nbf.write(nb, f)
         
-    print(f"Successfully generated INT8 notebook with biases: {output_path}")
+    print(f"Successfully generated zero-bias INT8 notebook: {output_path}")
 
 if __name__ == "__main__":
     create_notebook()
