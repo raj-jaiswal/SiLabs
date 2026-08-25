@@ -126,41 +126,41 @@ export default function AdminPage() {
   // Gated Auth: If not logged in as Admin, prompt for Admin password
   if (!currentUser || currentUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-slate-900 font-sans">
-        <div className="w-full max-w-md bg-white border border-slate-300 p-8 shadow-none space-y-6">
+      <div className="min-h-screen bg-surface-container-low flex flex-col items-center justify-center p-6 text-on-surface font-body-md select-none">
+        <div className="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm space-y-6">
           
           <div className="text-center space-y-2 select-none">
-            <div className="inline-flex p-3 bg-red-50 border border-red-200 text-red-700 mb-1">
-              <Shield className="w-6 h-6" />
+            <div className="inline-flex p-3 bg-error-container/20 border border-error/20 text-error mb-2 rounded-xl">
+              <span className="material-symbols-outlined text-[32px]">admin_panel_settings</span>
             </div>
-            <h1 className="text-lg font-bold tracking-tight uppercase text-slate-900">Administrator Login</h1>
-            <p className="text-xs text-slate-600">Enter Admin password to access `/admin` control panel</p>
+            <h1 className="text-headline-md font-headline-md font-black tracking-tight uppercase text-on-surface">Administrator Login</h1>
+            <p className="text-body-md font-body-md text-on-surface-variant">Enter Admin password to access `/admin` control panel</p>
           </div>
 
-          <div className="p-3 bg-slate-50 border border-slate-300 flex items-center space-x-3 text-xs font-mono">
-            <div className="p-2 bg-slate-200 text-slate-800">
-              <Mail className="w-4 h-4" />
+          <div className="p-4 bg-surface-container border border-outline-variant rounded-xl flex items-center space-x-4 text-body-md">
+            <div className="p-2 bg-primary-container/20 text-primary rounded-lg">
+              <span className="material-symbols-outlined">mail</span>
             </div>
             <div>
-              <div className="font-bold text-slate-900">admin@hospital.com</div>
-              <div className="text-[11px] text-slate-600">System Administrator</div>
+              <div className="font-bold text-on-surface">admin@hospital.com</div>
+              <div className="text-label-mono font-label-mono text-on-surface-variant text-[11px] mt-0.5">System Administrator</div>
             </div>
           </div>
 
-          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-xs font-mono">
+          <form onSubmit={handleAdminLoginSubmit} className="space-y-4 text-body-md">
             {adminLoginError && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-center font-bold flex items-center justify-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-red-600" />
-                <span>{adminLoginError}</span>
+              <div className="p-3 bg-error-container border border-error/30 rounded-lg text-on-error-container text-center font-bold flex items-center justify-center space-x-2">
+                <span className="material-symbols-outlined text-error">error</span>
+                <span className="text-[14px]">{adminLoginError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-slate-700 font-semibold mb-1.5">
+              <label className="block text-on-surface font-semibold mb-1.5">
                 Admin Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <span className="material-symbols-outlined text-on-surface-variant absolute left-3 top-2.5 text-[20px]">lock</span>
                 <input
                   type="password"
                   required
@@ -168,22 +168,22 @@ export default function AdminPage() {
                   value={adminPasswordInput}
                   onChange={e => { setAdminPasswordInput(e.target.value); setAdminLoginError(''); }}
                   placeholder="Enter admin password"
-                  className="w-full bg-white border border-slate-300 pl-9 pr-4 py-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900"
+                  className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 text-on-surface placeholder:text-outline-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-label-mono"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold transition-colors text-xs"
+              className="w-full py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-lg font-bold transition-colors text-body-md"
             >
               Sign In as Administrator
             </button>
           </form>
 
           <div className="pt-2 text-center">
-            <Link href="/" className="text-xs text-slate-600 hover:text-slate-900 inline-flex items-center">
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Return to Main Portal Choice
+            <Link href="/" className="text-body-md text-on-surface-variant hover:text-primary inline-flex items-center transition-colors">
+              <span className="material-symbols-outlined text-[16px] mr-1">arrow_back</span> Return to Main Portal Choice
             </Link>
           </div>
 
@@ -202,37 +202,39 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col font-sans text-slate-900 select-none">
+    <div className="flex flex-col h-screen overflow-hidden bg-surface-container-low text-on-surface font-body-md text-body-md antialiased select-none">
       <Header
         patients={patients}
         strideCount={strideCount}
         onOpenAdminSidebar={() => setIsAdminSidebarOpen(true)}
         onReSyncClock={handleReSyncClock}
         onToggleArchitecture={() => setShowArchitecture(!showArchitecture)}
-        showArchitecture={showArchitecture}
+        isArchitectureOpen={showArchitecture}
       />
       
-      {!dismissAlertBar && (
-        <CriticalAlertBar
-          criticalPatients={criticalPatients}
-          onSelectPatient={(id) => setSelectedPatientId(id)}
-          onDismiss={() => setDismissAlertBar(true)}
-        />
-      )}
+      <main className="flex-1 overflow-y-auto bg-surface-container-low pt-4 relative">
+        {!dismissAlertBar && (
+          <CriticalAlertBar
+            criticalPatients={criticalPatients}
+            onSelectPatient={(id) => setSelectedPatientId(id)}
+            onDismiss={() => setDismissAlertBar(true)}
+          />
+        )}
 
-      {/* Slide / Block Toggle for System Architecture & Extracted 9 Parameters */}
-      {showArchitecture && (
-        <div className="max-w-7xl mx-auto w-full px-6 pt-6 animate-in fade-in slide-in-from-top-4">
-          <IcuArchitectureBlock />
+        {/* Slide / Block Toggle for System Architecture & Extracted 9 Parameters */}
+        {showArchitecture && (
+          <div className="max-w-7xl mx-auto w-full px-6 pt-6 animate-in fade-in slide-in-from-top-4">
+            <IcuArchitectureBlock />
+          </div>
+        )}
+
+        <div className="flex-1 mt-6">
+          <TriageTable
+            patients={patients}
+            onSelectPatient={(patient) => setSelectedPatientId(patient.profile.id)}
+          />
         </div>
-      )}
-
-      <div className="flex-1">
-        <TriageTable
-          patients={patients}
-          onSelectPatient={(patient) => setSelectedPatientId(patient.profile.id)}
-        />
-      </div>
+      </main>
 
       <PatientDrawer
         patient={selectedPatient}
@@ -244,6 +246,6 @@ export default function AdminPage() {
         isOpen={isAdminSidebarOpen}
         onClose={() => setIsAdminSidebarOpen(false)}
       />
-    </main>
+    </div>
   );
 }

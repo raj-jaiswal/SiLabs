@@ -9,27 +9,27 @@ export default function Home() {
   const { currentUser } = useAuth();
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-slate-900 font-sans select-none">
-      <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-6">
+    <div className="min-h-screen bg-surface-container-low flex flex-col items-center justify-center p-6 text-on-surface font-body-md select-none">
+      <div className="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm space-y-6">
         
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-slate-100 rounded-xl border border-slate-300 text-slate-900 mb-2">
-            <Activity className="w-8 h-8" />
+          <div className="inline-flex p-3 bg-primary-container/10 rounded-xl border border-primary-container/20 text-primary mb-2">
+            <span className="material-symbols-outlined text-[32px]">monitor_heart</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight uppercase text-slate-900">Hospital Triage Portal</h1>
-          <p className="text-xs text-slate-600">SiLabs Intraoperative Monitoring &amp; Patient Dispatch System</p>
+          <h1 className="text-headline-md font-headline-md font-black tracking-tight uppercase text-primary">ICU Sentinel Portal</h1>
+          <p className="text-body-md font-body-md text-on-surface-variant">SiLabs Intraoperative Monitoring &amp; Patient Dispatch System</p>
         </div>
 
         {/* Current Active Session Status if logged in */}
         {currentUser && (
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+          <div className="p-4 bg-surface-container border border-outline-variant rounded-xl flex items-center justify-between text-body-md">
             <div>
-              <span className="text-slate-600">Active Session: </span>
-              <span className="font-bold text-slate-900">{currentUser.name}</span>
-              <span className="text-slate-500 text-[11px] block">{currentUser.email} ({currentUser.role})</span>
+              <span className="text-on-surface-variant">Active Session: </span>
+              <span className="font-bold text-on-surface">{currentUser.name}</span>
+              <span className="text-on-surface-variant text-[12px] block font-label-mono">{currentUser.email} ({currentUser.role})</span>
             </div>
-            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono text-[10px] border border-emerald-300 font-bold">
+            <span className="px-2 py-0.5 rounded bg-tertiary-container/10 text-tertiary-container font-label-mono text-[10px] border border-tertiary-container/30 font-bold tracking-wider">
               LOGGED IN
             </span>
           </div>
@@ -37,50 +37,50 @@ export default function Home() {
 
         {/* Front Portal Selection Buttons (ONLY Admin & User) */}
         <div className="space-y-4 pt-2">
-          <div className="text-center text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+          <div className="text-center text-label-mono font-label-mono text-on-surface-variant uppercase tracking-wider mb-2">
             Select Access Portal
           </div>
 
           {/* Option 1: Admin */}
           <Link
             href="/admin"
-            className="w-full p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-400 rounded-xl text-left transition-colors group flex items-center justify-between block"
+            className="w-full p-4 bg-surface border border-outline-variant hover:border-primary rounded-xl text-left transition-colors group flex items-center justify-between block hover:shadow-sm"
           >
-            <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-red-50 rounded-lg border border-red-200 text-red-700">
-                <Shield className="w-6 h-6" />
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-error-container/20 rounded-lg border border-error/20 text-error flex items-center justify-center">
+                <span className="material-symbols-outlined">admin_panel_settings</span>
               </div>
               <div>
-                <div className="font-bold text-slate-900 group-hover:text-black transition-colors text-sm">
+                <div className="font-headline-md text-[16px] text-on-surface group-hover:text-primary transition-colors">
                   Admin
                 </div>
-                <div className="text-[11px] text-slate-600">
+                <div className="text-body-md text-[12px] text-on-surface-variant mt-0.5">
                   System Administrator Login &amp; Dispatch Console (`/admin`)
                 </div>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+            <span className="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all">chevron_right</span>
           </Link>
 
           {/* Option 2: User */}
           <Link
             href="/user"
-            className="w-full p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-400 rounded-xl text-left transition-colors group flex items-center justify-between block"
+            className="w-full p-4 bg-surface border border-outline-variant hover:border-primary rounded-xl text-left transition-colors group flex items-center justify-between block hover:shadow-sm"
           >
-            <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-slate-200 rounded-lg border border-slate-300 text-slate-800">
-                <User className="w-6 h-6" />
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-primary-container/10 rounded-lg border border-primary-container/20 text-primary flex items-center justify-center">
+                <span className="material-symbols-outlined">badge</span>
               </div>
               <div>
-                <div className="font-bold text-slate-900 group-hover:text-black transition-colors text-sm">
+                <div className="font-headline-md text-[16px] text-on-surface group-hover:text-primary transition-colors">
                   User
                 </div>
-                <div className="text-[11px] text-slate-600">
+                <div className="text-body-md text-[12px] text-on-surface-variant mt-0.5">
                   Staff User Login (type user1, user2, user3, user4...)
                 </div>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
+            <span className="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all">chevron_right</span>
           </Link>
         </div>
 

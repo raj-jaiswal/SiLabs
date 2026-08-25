@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { PatientState, TriageRank, IndicatorRisk } from '../types/patient';
-import { User, Activity, AlertTriangle } from 'lucide-react';
 
 interface TriageTableProps {
   patients: PatientState[];
@@ -24,184 +23,172 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     return b.activeEventCount - a.activeEventCount;
   });
 
-  const renderRankBadge = (rank: TriageRank) => {
-    switch (rank) {
-      case 'P1_CRITICAL':
-        return (
-          <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-bold bg-red-50 text-red-700 border border-red-200">
-            P1 CRITICAL
-          </span>
-        );
-      case 'P2_HIGH':
-        return (
-          <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-300">
-            P2 HIGH
-          </span>
-        );
-      case 'P3_MODERATE':
-        return (
-          <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-bold bg-yellow-50 text-yellow-800 border border-yellow-300">
-            P3 MODERATE
-          </span>
-        );
-      case 'P4_STABLE':
-        return (
-          <span className="inline-flex items-center px-2.5 py-1 text-xs font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-            P4 STABLE
-          </span>
-        );
-    }
-  };
+  const p1Count = patients.filter(p => p.triageRank === 'P1_CRITICAL').length;
+  const p2Count = patients.filter(p => p.triageRank === 'P2_HIGH').length;
+  const p3Count = patients.filter(p => p.triageRank === 'P3_MODERATE').length;
+  const p4Count = patients.filter(p => p.triageRank === 'P4_STABLE').length;
 
-  const renderCleanVitalCell = (risk: IndicatorRisk, label: string) => {
+  const renderVitalCard = (risk: IndicatorRisk, label: string, isP1: boolean) => {
     const isAlert = risk.status === 'ACTIVE_ALERT';
     const isElevated = risk.status === 'ELEVATED_RISK';
 
-    const valueColor = isAlert ? 'text-red-600 font-extrabold' : isElevated ? 'text-amber-600 font-bold' : 'text-slate-900 font-bold';
-    const barColor = isAlert ? 'bg-red-600' : isElevated ? 'bg-amber-500' : 'bg-emerald-600';
-
+    const labelColor = isAlert ? 'text-error' : 'text-on-surface-variant';
+    const valueColor = isAlert ? 'text-error' : 'text-on-surface';
+    const barBgColor = isAlert ? 'bg-error-container' : 'bg-surface-container-high';
+    const barFillColor = isAlert ? 'bg-error' : isElevated ? 'bg-tertiary-container' : 'bg-primary-container';
+    
     return (
-      <div className="space-y-1 font-mono tabular-nums">
-        <div className="flex items-baseline justify-between space-x-2">
-          <span className={`text-base ${valueColor}`}>
-            {risk.currentValue.toFixed(1)} <span className="text-xs text-slate-500 font-medium font-sans">{risk.unit}</span>
+      <div className={isP1 && !isAlert ? 'opacity-90' : ''}>
+        <p className={`text-label-mono font-label-mono ${labelColor} mb-1 uppercase text-[10px] ${isAlert ? 'font-bold' : ''} flex items-center gap-1`}>
+          {isAlert && <span className="material-symbols-outlined text-[14px]">warning</span>}
+          {label}
+        </p>
+        <div className="flex items-end gap-2">
+          <span className={`text-display-vitals font-display-vitals text-[32px] md:text-[24px] lg:text-[32px] leading-none ${valueColor}`}>
+            {risk.currentValue.toFixed(1)}
           </span>
-          <span className={`text-xs ${isAlert ? 'text-red-700 font-bold' : isElevated ? 'text-amber-800 font-bold' : 'text-slate-600 font-medium'}`}>
-            {risk.probability}% risk
+          <span className="text-body-md font-body-md text-on-surface-variant mb-1">
+            {risk.unit}
           </span>
         </div>
-        
-        {/* Micro Clinical Progress Bar */}
-        <div className="w-full bg-slate-100 h-1.5 overflow-hidden border border-slate-200">
-          <div
-            className={`h-full transition-all duration-300 ${barColor}`}
-            style={{ width: `${Math.max(5, risk.probability)}%` }}
-          />
+        <div className={`mt-2 h-1.5 w-full ${barBgColor} rounded-full overflow-hidden`}>
+          <div className={`h-full ${barFillColor} rounded-full transition-all duration-300`} style={{ width: `${Math.max(5, risk.probability)}%` }}></div>
         </div>
+        <p className={`text-label-mono font-label-mono ${labelColor} mt-1 text-[10px] text-right ${isAlert ? 'font-bold' : ''}`}>
+          {risk.probability}% risk
+        </p>
       </div>
     );
   };
 
+  const getRankStyles = (rank: TriageRank) => {
+    switch(rank) {
+      case 'P1_CRITICAL':
+        return {
+          cardBorder: 'border-error/30 hover:border-error/60 shadow-[0_4px_12px_rgba(186,26,26,0.05)]',
+          stripe: 'bg-error',
+          badge: 'bg-error/10 text-error border-error/20',
+          badgeText: 'P1 CRITICAL',
+          leftBg: 'bg-error-container/10',
+        };
+      case 'P2_HIGH':
+        return {
+          cardBorder: 'border-outline-variant hover:border-outline shadow-sm',
+          stripe: 'bg-tertiary-container',
+          badge: 'bg-tertiary-container/5 text-tertiary-container border-tertiary-container/30',
+          badgeText: 'P2 HIGH',
+          leftBg: 'bg-surface-bright',
+        };
+      case 'P3_MODERATE':
+        return {
+          cardBorder: 'border-outline-variant hover:border-outline shadow-sm',
+          stripe: 'bg-secondary',
+          badge: 'bg-secondary/5 text-secondary border-secondary/30',
+          badgeText: 'P3 MODERATE',
+          leftBg: 'bg-surface-bright',
+        };
+      case 'P4_STABLE':
+      default:
+        return {
+          cardBorder: 'border-outline-variant hover:border-outline shadow-sm opacity-90',
+          stripe: 'bg-primary-container',
+          badge: 'bg-primary-container/5 text-primary-container border-primary-container/30',
+          badgeText: 'P4 STABLE',
+          leftBg: 'bg-surface-bright',
+        };
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-6">
-      <div className="bg-white border border-slate-300 overflow-hidden shadow-none">
-        {/* Table Header Controls */}
-        <div className="px-6 py-3.5 border-b border-slate-300 flex items-center justify-between select-none bg-slate-100">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
-            <Activity className="w-4 h-4 mr-2 text-slate-800" />
-            Priority Triage Queue (Auto-Sorted)
-          </h2>
-          <div className="flex items-center space-x-3 text-xs text-slate-600 font-mono">
-            <span className="inline-flex items-center px-2 py-0.5 bg-white text-slate-800 border border-slate-300 text-[11px] font-semibold">
-              5s Stride Sampling
-            </span>
-            <span>Showing {sortedPatients.length} Active Patients</span>
+    <div className="max-w-7xl mx-auto px-6 pb-margin">
+      {/* Page Header / Context */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+        <div>
+          <h2 className="text-headline-lg font-headline-lg text-on-surface">Priority Triage Queue</h2>
+          <p className="text-on-surface-variant text-body-md font-body-md mt-1">
+            Auto-sorted by real-time telemetry risk score. Showing {sortedPatients.length} active patients.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="bg-surface-container-highest px-4 py-2 rounded-lg flex items-center gap-4 border border-outline-variant/50 shrink-0">
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-error"></span><span className="text-label-mono font-label-mono text-on-surface-variant">P1: {p1Count}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-tertiary-container"></span><span className="text-label-mono font-label-mono text-on-surface-variant">P2: {p2Count}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-secondary"></span><span className="text-label-mono font-label-mono text-on-surface-variant">P3: {p3Count}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary-container"></span><span className="text-label-mono font-label-mono text-on-surface-variant">P4: {p4Count}</span></div>
           </div>
         </div>
+      </div>
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse select-none">
-            <thead>
-              <tr className="border-b border-slate-300 bg-slate-50 text-[11px] font-mono font-bold text-slate-700 uppercase tracking-wider">
-                <th className="py-3 px-4">Priority Rank</th>
-                <th className="py-3 px-4">Patient Profile</th>
-                <th className="py-3 px-4">Clinical Metadata</th>
-                <th className="py-3 px-4">Hypotension (MAP)</th>
-                <th className="py-3 px-4">Hypoxia (SpO2)</th>
-                <th className="py-3 px-4">Tachycardia (HR)</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-sm">
-              {sortedPatients.map((patient) => {
-                const { profile, hypotension, hypoxia, tachycardia, triageRank } = patient;
-                const isEsp32 = profile.isEsp32Live || profile.id === 'PATIENT-000';
+      {/* Bento Grid / Card Layout */}
+      <div className="grid grid-cols-12 gap-gutter">
+        {sortedPatients.map(patient => {
+          const { profile, hypotension, hypoxia, tachycardia, triageRank } = patient;
+          const styles = getRankStyles(triageRank);
+          const isP1 = triageRank === 'P1_CRITICAL';
+          const isStale = (profile.isEsp32Live || profile.id === 'PATIENT-000') && profile.isStale;
 
-                return (
-                  <tr
-                    key={profile.id}
-                    onClick={() => onSelectPatient(patient)}
-                    className={`table-row-hover cursor-pointer group ${
-                      isEsp32
-                        ? 'bg-amber-50/70 border-l-4 border-amber-500'
-                        : ''
-                    }`}
-                  >
-                    {/* Priority Rank */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      {renderRankBadge(triageRank)}
-                    </td>
+          return (
+            <div key={profile.id} className={`col-span-12 bg-surface-container-lowest rounded-xl border ${styles.cardBorder} overflow-hidden flex flex-col md:flex-row relative group transition-colors`}>
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${styles.stripe}`}></div>
 
-                    {/* Patient Profile */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 border ${isEsp32 ? 'bg-amber-100 border-amber-300 text-amber-900' : 'bg-slate-100 border-slate-300 text-slate-700'}`}>
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900 flex items-center space-x-2">
-                            <span>{profile.patientNumber}</span>
-                            {isEsp32 && profile.isStale ? (
-                              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center">
-                                <AlertTriangle className="w-3 h-3 mr-1 text-amber-600" />
-                                NO DATA (&gt;20s)
-                              </span>
-                            ) : isEsp32 ? (
-                              <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center">
-                                <span className="w-1.5 h-1.5 bg-emerald-600 mr-1" />
-                                ESP32 LIVE
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="text-xs text-slate-600 flex items-center space-x-2 mt-0.5">
-                            <span>{profile.age} yrs, {profile.sex}</span>
-                            <span>•</span>
-                            <span className="text-slate-900 font-bold">{profile.bloodType}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+              {/* Patient Identity Profile */}
+              <div className={`p-6 md:w-[30%] border-b md:border-b-0 md:border-r border-outline-variant/30 flex flex-col justify-center ${styles.leftBg} relative`}>
+                {isStale && (
+                  <div className="absolute inset-0 bg-surface-container/50 backdrop-blur-[1px] z-10 flex items-center justify-center flex-col gap-2">
+                    <div className="bg-surface-container text-on-surface border border-outline-variant px-3 py-1.5 rounded-md flex items-center gap-2 text-label-mono font-label-mono font-bold shadow-sm">
+                      <span className="material-symbols-outlined text-tertiary-container text-[16px]">warning</span> NO DATA (&gt;20s)
+                    </div>
+                  </div>
+                )}
+                
+                <div className={`flex items-start justify-between mb-3 ${isStale ? 'opacity-50' : ''}`}>
+                  <span className={`${styles.badge} border px-2 py-1 rounded text-label-mono font-label-mono font-bold tracking-widest text-[10px]`}>
+                    {styles.badgeText}
+                  </span>
+                  <span className="text-on-surface-variant text-label-mono font-label-mono">
+                    {profile.isEsp32Live ? 'ESP32 Live' : 'Simulated'}
+                  </span>
+                </div>
 
-                    {/* Clinical Metadata */}
-                    <td className="py-3.5 px-4 max-w-xs">
-                      <div className="text-xs font-bold text-slate-900 truncate">
-                        {profile.primaryDiagnosis}
-                      </div>
-                      <div className="text-[11px] text-slate-600 truncate mt-0.5">
-                        {profile.comorbidities.join(', ')}
-                      </div>
-                    </td>
+                <div className={`flex items-center gap-4 ${isStale ? 'opacity-50' : ''}`}>
+                  <div className="w-12 h-12 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-on-surface-variant shrink-0">
+                    <span className="material-symbols-outlined text-[24px]">person</span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-headline-md font-headline-md text-[20px] text-on-surface truncate">{profile.patientNumber}</h3>
+                    <p className="text-body-md font-body-md text-on-surface-variant truncate">
+                      {profile.age} yrs, {profile.sex} • <span className="font-bold text-on-surface">{profile.bloodType}</span>
+                    </p>
+                  </div>
+                </div>
 
-                    {/* Numerical Vital Cells */}
-                    <td className="py-3.5 px-4 min-w-[140px]">
-                      {renderCleanVitalCell(hypotension, 'HYPOTENSION')}
-                    </td>
-                    <td className="py-3.5 px-4 min-w-[140px]">
-                      {renderCleanVitalCell(hypoxia, 'HYPOXIA')}
-                    </td>
-                    <td className="py-3.5 px-4 min-w-[140px]">
-                      {renderCleanVitalCell(tachycardia, 'TACHYCARDIA')}
-                    </td>
+                <div className={`mt-4 text-body-md font-body-md ${isStale ? 'opacity-50' : ''}`}>
+                  <p className="font-semibold text-on-surface truncate" title={profile.primaryDiagnosis}>{profile.primaryDiagnosis}</p>
+                  <p className="text-on-surface-variant text-[12px] mt-0.5 truncate" title={profile.comorbidities.join(', ')}>
+                    {profile.comorbidities.join(', ')}
+                  </p>
+                </div>
+              </div>
 
-                    {/* Action Button */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectPatient(patient);
-                        }}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 text-xs font-bold transition-colors"
-                      >
-                        Inspect Vitals
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+              {/* Vitals Data Visualizations */}
+              <div className={`p-6 md:w-[55%] grid grid-cols-3 gap-6 items-center ${isStale ? 'opacity-50 grayscale' : ''}`}>
+                {renderVitalCard(hypotension, 'Hypotension (MAP)', isP1)}
+                {renderVitalCard(hypoxia, 'Hypoxia (SpO2)', isP1)}
+                {renderVitalCard(tachycardia, 'Tachycardia (HR)', isP1)}
+              </div>
+
+              {/* Actions */}
+              <div className="p-6 md:w-[15%] flex items-center justify-end border-t md:border-t-0 md:border-l border-outline-variant/30 bg-surface-bright">
+                <button 
+                  onClick={() => onSelectPatient(patient)}
+                  className="w-full md:w-auto bg-surface text-primary border border-outline-variant px-6 py-3 rounded-lg font-label-mono text-label-mono hover:bg-surface-container-high transition-colors shadow-sm whitespace-nowrap"
+                >
+                  Inspect
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

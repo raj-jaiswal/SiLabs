@@ -17,14 +17,14 @@ function getDeviceEpoch(dev: any): number {
         const devTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], parts[2]);
         return devTime.getTime() / 1000;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   return 0;
 }
 
 export async function GET() {
   try {
-    const dataDir = '/home/logan78/Desktop/SiLabs/process_labeled_data';
+    const dataDir = path.join(process.cwd(), '../patient_labeled_data');
     if (!fs.existsSync(dataDir)) {
       return NextResponse.json({ error: `Directory ${dataDir} not found` }, { status: 404 });
     }
