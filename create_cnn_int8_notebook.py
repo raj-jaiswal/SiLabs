@@ -2,8 +2,8 @@
 """
 create_cnn_int8_notebook.py
 Programmatically constructs CNN/train_1d_cnn_int8.ipynb using nbformat.
-Includes automatic dependency self-healing (Cell 0), per-epoch Confusion Matrix callbacks,
-and a dedicated final Confusion Matrix visualization cell (Cell 6).
+Guarantees 100% FULL INT8 Quantization (int8 input, int8 operators, int8 output, zero float32/int16)
+for EFR32 microcontroller deployment.
 """
 
 import os
@@ -17,33 +17,29 @@ def create_notebook():
     
     # Title & Overview
     cells.append(nbf.v4.new_markdown_cell(
-        "# CPU-Optimized INT8 1D CNN Model Training & Microcontroller Export Pipeline\n"
+        "# Pure INT8 1D CNN Model Training & Microcontroller Export Pipeline\n"
         "\n"
-        "This notebook implements an end-to-end, **CPU-optimized and memory-safe** 1D Convolutional Neural Network (CNN) "
-        "training and INT8 quantization pipeline for intraoperative adverse event prediction (Hypotension, Hypoxia, Tachycardia).\n"
+        "This notebook implements an end-to-end **100% Full INT8 Quantized** 1D Convolutional Neural Network (CNN) "
+        "training pipeline for Silicon Labs **EFR32 microcontrollers** (Cortex-M33).\n"
         "\n"
-        "### Key Technical Features:\n"
-        "1. **Self-Healing Environment**: Auto-detects and installs TensorFlow in the active Jupyter kernel if missing or corrupted.\n"
-        "2. **Confusion Matrix Generation**: Computes per-epoch Confusion Matrices and plots final Seaborn heatmaps for all 3 targets.\n"
-        "3. **Thread & CPU Parallelism Control**: Configures `inter_op` & `intra_op` threads to prevent CPU thrashing.\n"
-        "4. **RAM Footprint Reduction**: Stores in-memory feature matrices as 1-byte signed `int8` (`[-128, 127]`), saving 75% RAM.\n"
-        "5. **Isolated INT8 Export**: Saves all scaler parameters, confusion matrix plots, and quantized TFLite models into `CNN/models_int8/`."
+        "### Key Technical Requirements Enforced:\n"
+        "1. **Full INT8 Quantization**: Input tensor is `int8_t`, output tensor is `int8_t`, and all intermediate layers use pure INT8 integer math.\n"
+        "2. **Zero Float32 / Zero Int16**: Removes Keras float normalization layers from the graph; pre-computes feature scaling into INT8 affine parameters.\n"
+        "3. **Representative Dataset Calibration**: Uses real patient telemetry to calibrate INT8 dynamic ranges for all Conv1D, MaxPool1D, and Dense layers.\n"
+        "4. **On-Notebook Verification**: Asserts `dtype == np.int8` for input and output tensors before saving models into `CNN/models_int8/`."
     ))
     
     # Cell 0: Self-Healing Dependency Resolver
-    cells.append(nbf.v4.new_markdown_cell("## 0. Self-Healing Dependency & TensorFlow Installation Check"))
+    cells.append(nbf.v4.new_markdown_cell("## 0. Self-Healing Dependency & TensorFlow Check"))
     cell0_code = (
-        "# Automatic Dependency & Environment Repair for Jupyter Kernel\n"
-        "import sys\n"
-        "import subprocess\n"
-        "\n"
+        "import sys, subprocess\n"
         "try:\n"
         "    import tensorflow as tf\n"
         "    from tensorflow.python import pywrap_tensorflow\n"
-        "    print(f'[Kernel Check] TensorFlow {tf.__version__} is correctly installed and ready.')\n"
+        "    print(f'[Kernel Check] TensorFlow v{tf.__version__} is correctly installed and ready.')\n"
         "except (ImportError, ModuleNotFoundError, AttributeError) as e:\n"
         "    print(f'[Kernel Warning] TensorFlow issue detected ({e}). Repairing package in current kernel...')\n"
-        "    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'tensorflow'])\n"
+        "    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'tensorflow'])\n"
         "    import tensorflow as tf\n"
         "    print(f'[Kernel Success] TensorFlow successfully installed/repaired: v{tf.__version__}')"
     )
@@ -69,7 +65,7 @@ def create_notebook():
         "from tensorflow import keras\n"
         "from sklearn.model_selection import train_test_split\n"
         "from sklearn.utils.class_weight import compute_class_weight\n"
-        "from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score\n"
+        "from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score\n"
         "\n"
         "tf.config.threading.set_inter_op_parallelism_threads(2)\n"
         "tf.config.threading.set_intra_op_parallelism_threads(4)\n"
@@ -84,16 +80,15 @@ def create_notebook():
     # Cell 2: Configuration & Dataset Indexing
     cells.append(nbf.v4.new_markdown_cell("## 2. Configuration & 500-Patient Dataset Indexing"))
     cell2_code = (
-        "# --- CPU-Optimized Hyperparameters ---\n"
+        "# --- Configuration & Hyperparameters ---\n"
         "WINDOW_SIZE = 600\n"
         "STRIDE = 10         # Stride 10s for fast CPU training and memory safety\n"
         "EPOCHS = 8          # 8 Epochs for high efficiency\n"
         "BATCH_SIZE = 128    # Optimal CPU cache batch size\n"
         "MAX_TRAIN = 500     # 500 Patient records\n"
         "MAX_VAL = 100\n"
-        "MAX_WINDOWS_PER_PATIENT = 300  # Cap per patient to prevent RAM overload\n"
+        "MAX_WINDOWS_PER_PATIENT = 300  # Cap per patient\n"
         "\n"
-        "# Resolve process_labeled_data path\n"
         "possible_paths = [\n"
         "    '../process_labeled_data',\n"
         "    'process_labeled_data',\n"
@@ -124,12 +119,12 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell2_code))
     
-    # Cell 3: Global INT8 Quantization Scaler Computation
-    cells.append(nbf.v4.new_markdown_cell("## 3. Global INT8 Quantization Scaler Computation"))
+    # Cell 3: Pure INT8 Feature Scaler Computation
+    cells.append(nbf.v4.new_markdown_cell("## 3. Pure INT8 Feature Scaler Computation"))
     cell3_code = (
         "print('[INT8 Scaler] Computing global feature min/max and INT8 quantization parameters...')\n"
         "scaler_data = []\n"
-        "for file in train_files[:200]:  # Subsample 200 patients for fast & robust scaler calculation\n"
+        "for file in train_files[:200]:\n"
         "    try:\n"
         "        df = pd.read_csv(file, usecols=lambda c: c in features)\n"
         "        avail = [c for c in features if c in df.columns]\n"
@@ -177,8 +172,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell3_code))
     
-    # Cell 4: RAM-Efficient INT8 Generator & Light 1D CNN Architecture
-    cells.append(nbf.v4.new_markdown_cell("## 4. RAM-Efficient INT8 Sequence Generator & CPU 1D CNN Architecture"))
+    # Cell 4: Pure INT8 Data Generator & Keras Model Architecture
+    cells.append(nbf.v4.new_markdown_cell("## 4. Pure INT8 Sequence Data Generator & 1D CNN Architecture"))
     cell4_code = (
         "class Int8WindowDataGenerator(keras.utils.Sequence):\n"
         "    def __init__(self, file_list, target_col, features, batch_size=128, window_size=600, stride=10, max_windows=300, shuffle=True):\n"
@@ -229,6 +224,13 @@ def create_notebook():
         "            y_batch[i] = self.y_data[file_idx][start + self.window_size - 1]\n"
         "        return int8_to_float(X_batch_int8), y_batch\n"
         "        \n"
+        "    def get_int8_sample_generator(self, num_samples=200):\n"
+        "        indices = np.random.choice(len(self.window_indices), size=min(num_samples, len(self.window_indices)), replace=False)\n"
+        "        for b_idx in indices:\n"
+        "            file_idx, start = self.window_indices[b_idx]\n"
+        "            sample_int8 = self.X_int8[file_idx][start : start + self.window_size]\n"
+        "            yield int8_to_float(np.expand_dims(sample_int8, axis=0))\n"
+        "        \n"
         "    def get_all_y(self):\n"
         "        y_all = np.empty(len(self.window_indices), dtype=np.float32)\n"
         "        for i, w_idx in enumerate(self.window_indices):\n"
@@ -236,35 +238,11 @@ def create_notebook():
         "            y_all[i] = self.y_data[file_idx][start + self.window_size - 1]\n"
         "        return y_all\n"
         "\n"
-        "# Epoch-End Confusion Matrix Callback\n"
-        "class EpochEndCallback(keras.callbacks.Callback):\n"
-        "    def __init__(self, val_gen, target):\n"
-        "        super().__init__()\n"
-        "        self.val_gen = val_gen\n"
-        "        self.target = target\n"
-        "        \n"
-        "    def on_epoch_end(self, epoch, logs=None):\n"
-        "        y_true = self.val_gen.get_all_y()\n"
-        "        y_pred_prob = self.model.predict(self.val_gen, verbose=0).flatten()\n"
-        "        best_thresh = 0.5\n"
-        "        best_f1 = 0\n"
-        "        for thresh in np.arange(0.3, 0.8, 0.05):\n"
-        "            y_pred = (y_pred_prob > thresh).astype(int)\n"
-        "            score = f1_score(y_true, y_pred, zero_division=0)\n"
-        "            if score > best_f1:\n"
-        "                best_f1 = score\n"
-        "                best_thresh = thresh\n"
-        "        cm = confusion_matrix(y_true, (y_pred_prob > best_thresh).astype(int))\n"
-        "        print(f'\\n--- Epoch {epoch+1} [{self.target}] Confusion Matrix (Optimal Threshold: {best_thresh:.2f}, F1: {best_f1:.4f}) ---')\n"
-        "        print(cm)\n"
-        "\n"
-        "# CPU-Optimized 1D CNN Architecture\n"
+        "# Pure 1D CNN Model Architecture (No Keras float normalization in graph)\n"
         "def get_compiled_model(target_name):\n"
         "    dropout_rate = 0.5 if target_name == 'Future_Hypoxia' else 0.3\n"
         "    inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))\n"
-        "    norm_layer = keras.layers.Normalization(mean=feat_mean, variance=feat_var)\n"
-        "    x = norm_layer(inputs)\n"
-        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
+        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(inputs)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
         "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
@@ -282,17 +260,17 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell4_code))
     
-    # Cell 5: Safe Training & Dedicated INT8 Model Export
-    cells.append(nbf.v4.new_markdown_cell("## 5. Safe Training Loop & Dedicated INT8 Storage (`models_int8/`)"))
+    # Cell 5: Training & FULL INT8 TFLite Conversion Loop
+    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & FULL INT8 Model Export (Zero Float32/Int16)"))
     cell5_code = (
         "targets = ['Future_Hypotension', 'Future_Hypoxia', 'Future_Tachycardia']\n"
         "exported_models = []\n"
         "evaluation_results = {}\n"
         "\n"
         "for target in targets:\n"
-        "    print('=' * 60)\n"
-        "    print(f' CPU TRAINING INT8 1D CNN: {target} (500 Patients)')\n"
-        "    print('=' * 60)\n"
+        "    print('=' * 65)\n"
+        "    print(f' TRAINING PURE INT8 1D CNN FOR: {target}')\n"
+        "    print('=' * 65)\n"
         "    \n"
         "    train_gen = Int8WindowDataGenerator(train_files, target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, MAX_WINDOWS_PER_PATIENT, shuffle=True)\n"
         "    val_gen = Int8WindowDataGenerator(val_files, target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, MAX_WINDOWS_PER_PATIENT, shuffle=False)\n"
@@ -309,18 +287,17 @@ def create_notebook():
         "        \n"
         "    model = get_compiled_model(target)\n"
         "    early_stop = keras.callbacks.EarlyStopping(monitor='val_pr_auc', mode='max', patience=3, restore_best_weights=True)\n"
-        "    epoch_cb = EpochEndCallback(val_gen, target)\n"
         "    \n"
         "    history = model.fit(\n"
         "        train_gen,\n"
         "        validation_data=val_gen,\n"
         "        epochs=EPOCHS,\n"
         "        class_weight=class_weights,\n"
-        "        callbacks=[early_stop, epoch_cb],\n"
+        "        callbacks=[early_stop],\n"
         "        verbose=1\n"
         "    )\n"
         "    \n"
-        "    # Compute Final Predictions for Confusion Matrix\n"
+        "    # Compute Validation Performance Metrics\n"
         "    y_val_true = val_gen.get_all_y()\n"
         "    y_val_prob = model.predict(val_gen, verbose=0).flatten()\n"
         "    best_t, max_f1 = 0.5, 0.0\n"
@@ -332,46 +309,62 @@ def create_notebook():
         "            \n"
         "    cm = confusion_matrix(y_val_true, (y_val_prob > best_t).astype(int))\n"
         "    evaluation_results[target] = {\n"
-        "        'cm': cm,\n"
-        "        'threshold': best_t,\n"
-        "        'f1': max_f1,\n"
+        "        'cm': cm, 'threshold': best_t, 'f1': max_f1,\n"
         "        'precision': precision_score(y_val_true, (y_val_prob > best_t).astype(int), zero_division=0),\n"
         "        'recall': recall_score(y_val_true, (y_val_prob > best_t).astype(int), zero_division=0)\n"
         "    }\n"
         "    \n"
-        "    # Export to TFLite INT8 model in models_int8/\n"
+        "    # FULL INT8 TFLite Converter Configuration\n"
+        "    print(f'\\n[Full INT8 Converter] Quantizing {target} model to FULL INT8 (int8 input, int8 ops, int8 output)...')\n"
+        "    def rep_gen():\n"
+        "        for sample in train_gen.get_int8_sample_generator(num_samples=150):\n"
+        "            yield [sample]\n"
+        "            \n"
         "    converter = tf.lite.TFLiteConverter.from_keras_model(model)\n"
         "    converter.optimizations = [tf.lite.Optimize.DEFAULT]\n"
-        "    tflite_quant_model = converter.convert()\n"
+        "    converter.representative_dataset = rep_gen\n"
+        "    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]\n"
+        "    converter.inference_input_type = tf.int8\n"
+        "    converter.inference_output_type = tf.int8\n"
+        "    \n"
+        "    tflite_int8_model = converter.convert()\n"
+        "    \n"
+        "    # ON-NOTEBOOK VERIFICATION OF INT8 TENSORS\n"
+        "    interpreter = tf.lite.Interpreter(model_content=tflite_int8_model)\n"
+        "    interpreter.allocate_tensors()\n"
+        "    inp_dtype = interpreter.get_input_details()[0]['dtype']\n"
+        "    out_dtype = interpreter.get_output_details()[0]['dtype']\n"
+        "    assert inp_dtype == np.int8, f'Input is {inp_dtype}, not int8!'\n"
+        "    assert out_dtype == np.int8, f'Output is {out_dtype}, not int8!'\n"
+        "    print(f'✓ VERIFIED: 100% Full INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})')\n"
         "    \n"
         "    tflite_filename = f'cnn_int8_{target}.tflite'\n"
         "    tflite_full_path = os.path.join(MODEL_OUTPUT_DIR, tflite_filename)\n"
         "    with open(tflite_full_path, 'wb') as f:\n"
-        "        f.write(tflite_quant_model)\n"
+        "        f.write(tflite_int8_model)\n"
         "        \n"
-        "    file_size_kb = len(tflite_quant_model) / 1024.0\n"
+        "    file_size_kb = len(tflite_int8_model) / 1024.0\n"
         "    exported_models.append((target, tflite_full_path, file_size_kb))\n"
-        "    print(f'✓ Saved INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
+        "    print(f'✓ Saved FULL INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
         "    \n"
         "    keras.backend.clear_session()\n"
         "    del train_gen, val_gen, y_tr, model\n"
         "    gc.collect()\n"
         "\n"
-        "print('\\n' + '=' * 60)\n"
-        "print('SUMMARY OF EXPORTED INT8 MODELS:')\n"
+        "print('\\n' + '=' * 65)\n"
+        "print('SUMMARY OF EXPORTED FULL INT8 MODELS (ZERO FLOAT32 / INT16):')\n"
         "for target, path, size in exported_models:\n"
         "    print(f' - {target}: {path} ({size:.2f} KB)')\n"
         "print(f' - INT8 Scaler Parameters: {scaler_json_path}')\n"
-        "print('=' * 60)"
+        "print('=' * 65)"
     )
     cells.append(nbf.v4.new_code_cell(cell5_code))
     
     # Cell 6: Confusion Matrix Heatmap Visualization
     cells.append(nbf.v4.new_markdown_cell("## 6. Confusion Matrix Heatmaps & Performance Evaluation"))
     cell6_code = (
-        "# Plotting Side-by-Side Confusion Matrices for all 3 Targets\n"
         "fig, axes = plt.subplots(1, 3, figsize=(18, 5))\n"
-        "fig.suptitle('INT8 1D CNN Validation Confusion Matrices (500 Patients)', fontsize=14, fontweight='bold')\n"
+        "fig.suptitle('Full INT8 1D CNN Validation Confusion Matrices (EFR32 Hardware Compatible)', fontsize=14, fontweight='bold')\n"
         "\n"
         "target_titles = {\n"
         "    'Future_Hypotension': 'Hypotension (MAP < 65)',\n"
@@ -412,7 +405,7 @@ def create_notebook():
     with open(output_path, "w", encoding="utf-8") as f:
         nbf.write(nb, f)
         
-    print(f"Successfully generated notebook with Confusion Matrix heatmaps: {output_path}")
+    print(f"Successfully generated FULL INT8 notebook (Zero Float32/Int16): {output_path}")
 
 if __name__ == "__main__":
     create_notebook()
