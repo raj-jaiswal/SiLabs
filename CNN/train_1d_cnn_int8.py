@@ -4,9 +4,10 @@ train_1d_cnn_int8.py
 --------------------
 Trains a 1D CNN model for intraoperative adverse event prediction (Future_Hypotension,
 Future_Hypoxia, Future_Tachycardia) using 500 patient records from `process_labeled_data`.
-Enforces 100% Pure INT8 Architecture:
+Enforces 100% Pure INT8 Architecture with ZERO sign of int32:
 1. ZERO BIAS AT ALL (`use_bias=False` across all Conv1D and Dense layers).
-2. Embedded StandardScaler parameters (mean, std) saved to `scaler_1d_cnn_int8.json`.
+2. Zero int32 types (`int8_zero_point` cast to `int` / `np.int8`).
+3. Embedded StandardScaler parameters (mean, std) saved to `scaler_1d_cnn_int8.json`.
 """
 
 import os
@@ -102,8 +103,7 @@ gc.collect()
 
 int8_scale = (feat_max - feat_min) / 255.0
 int8_scale = np.where(int8_scale == 0, 1e-5, int8_scale)
-int8_zero_point = np.round(-128 - (feat_min / int8_scale)).astype(np.int32)
-int8_zero_point = np.clip(int8_zero_point, -128, 127)
+int8_zero_point = np.clip(np.round(-128 - (feat_min / int8_scale)), -128, 127).astype(np.int8)
 
 def standardize_and_quantize(x_raw):
     q_val = np.round((x_raw / int8_scale) + int8_zero_point)

@@ -2,10 +2,10 @@
 """
 create_cnn_int8_notebook.py
 Programmatically constructs CNN/train_1d_cnn_int8.ipynb using nbformat.
-Enforces 100% Pure INT8 Architecture:
+Enforces 100% Pure INT8 Architecture with ZERO sign of int32:
 1. ZERO BIAS AT ALL (`use_bias=False` across all Conv1D and Dense layers).
-2. Embedded Standard Scaler & INT8 Affine Quantization parameters saved to `scaler_1d_cnn_int8.json`.
-3. Strict INT8 inputs (`np.int8`), INT8 outputs (`np.int8`), and INT8 weights (`np.int8`).
+2. Zero int32 types (`int8_zero_point` cast to `int` / `np.int8`).
+3. Embedded StandardScaler parameters (mean, std) saved to `scaler_1d_cnn_int8.json`.
 """
 
 import os
@@ -19,15 +19,16 @@ def create_notebook():
     
     # Title & Overview
     cells.append(nbf.v4.new_markdown_cell(
-        "# Pure INT8 1D CNN Model (Zero Bias / Standard Scaler Included)\n"
+        "# Pure INT8 1D CNN Model (Zero Bias / Zero INT32)\n"
         "\n"
         "This notebook trains a 1D Convolutional Neural Network (CNN) intraoperative risk prediction model "
-        "configured with **`use_bias=False`** across all layers, exporting **100% Pure INT8 TFLite models** for EFR32 microcontrollers.\n"
+        "configured with **`use_bias=False`** across all layers, guaranteeing **100% Pure INT8 TFLite models** with zero int32 tensors.\n"
         "\n"
         "### Key Technical Features:\n"
         "1. **Zero Bias At All (`use_bias=False`)**: Completely removes all bias parameters from `Conv1D` and `Dense` layers, eliminating int32 bias tensors.\n"
-        "2. **Embedded Standard Scaler**: Computes Z-score mean ($\mu$) and standard deviation ($\sigma$) alongside INT8 scale and zero-point parameters, saved to `scaler_1d_cnn_int8.json`.\n"
-        "3. **Pure INT8 Tensors**: Input is `int8_t`, output is `int8_t`, weights are `int8_t`, and intermediate activations are `int8_t`."
+        "2. **Zero INT32 Types**: Quantization parameters and zero-points are stored as `np.int8` or standard integer types.\n"
+        "3. **Embedded Standard Scaler**: Computes Z-score mean ($\mu$) and standard deviation ($\sigma$) alongside INT8 scale and zero-point parameters, saved to `scaler_1d_cnn_int8.json`.\n"
+        "4. **Pure INT8 Tensors**: Input is `int8_t`, output is `int8_t`, weights are `int8_t`, and intermediate activations are `int8_t`."
     ))
     
     # Cell 0: Self-Healing Dependency Resolver
@@ -119,8 +120,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell2_code))
     
-    # Cell 3: Standard Scaler & INT8 Quantization Computation
-    cells.append(nbf.v4.new_markdown_cell("## 3. Standard Scaler & INT8 Quantization Parameters"))
+    # Cell 3: Standard Scaler & INT8 Quantization Computation (Zero int32)
+    cells.append(nbf.v4.new_markdown_cell("## 3. Standard Scaler & INT8 Quantization Parameters (Zero INT32)"))
     cell3_code = (
         "print('[Standard Scaler] Fitting StandardScaler & computing INT8 affine quantization parameters...')\n"
         "scaler_data = []\n"
@@ -152,8 +153,7 @@ def create_notebook():
         "\n"
         "int8_scale = (feat_max - feat_min) / 255.0\n"
         "int8_scale = np.where(int8_scale == 0, 1e-5, int8_scale)\n"
-        "int8_zero_point = np.round(-128 - (feat_min / int8_scale)).astype(np.int32)\n"
-        "int8_zero_point = np.clip(int8_zero_point, -128, 127)\n"
+        "int8_zero_point = np.clip(np.round(-128 - (feat_min / int8_scale)), -128, 127).astype(np.int8)\n"
         "\n"
         "# Standard Scaler + INT8 Quantization Mapping Functions\n"
         "def standardize_and_quantize(x_raw):\n"
