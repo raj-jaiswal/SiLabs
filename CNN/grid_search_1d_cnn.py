@@ -6,9 +6,10 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score, make_scorer
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 # Check GPU
 gpus = tf.config.list_physical_devices('GPU')
@@ -23,9 +24,8 @@ if gpus:
 
 # --- Config ---
 WINDOW_SIZE = 600
-STRIDE = 1
-EPOCHS = 10
-BATCH_SIZE = 128
+STRIDE = 10  # Use a larger stride for grid search to reduce memory and speed up
+EPOCHS_GS = 5  # Smaller number of epochs for fast grid search
 
 # Resolving paths
 base_dir = os.path.dirname(os.getcwd())
@@ -38,7 +38,6 @@ else:
 
 csv_files = sorted(glob.glob(os.path.join(input_dir, "patient_*_1hz.csv")))
 
-# The exact 19 features present in the CSV
 base_features = [
     "Solar8000/HR", "Solar8000/ART_SBP", "Solar8000/ART_DBP", "Solar8000/ART_MBP",
     "Solar8000/PLETH_SPO2", "Solar8000/RR_CO2", "Solar8000/ETCO2", "Primus/FIO2", "Solar8000/BT"
@@ -54,9 +53,8 @@ print(f"Total CSV Files: {len(csv_files)}")
 train_val_files, test_files = train_test_split(csv_files, test_size=0.20, random_state=42, shuffle=True)
 train_files, val_files = train_test_split(train_val_files, test_size=0.125, random_state=42, shuffle=True)
 
-# We will use only a subset for memory reasons if dataset is very large, but let's try max possible
-MAX_TRAIN = 2000
-MAX_VAL = 300
+# VERY small subset for grid search
+MAX_TRAIN_GS = 15
 
 class WindowDataGenerator(keras.utils.Sequence):
     def __init__(self, file_list, target_col, features, batch_size=64, window_size=600, stride=5, shuffle=True):
@@ -83,7 +81,6 @@ class WindowDataGenerator(keras.utils.Sequence):
                 self.X_data.append(arr)
                 self.y_data.append(y_vals)
                 
-                # Pre-calculate valid window start indices for this patient
                 for i in range(0, len(arr) - window_size, stride):
                     if not np.isnan(y_vals[i + window_size - 1]):
                         self.window_indices.append((file_idx, i))
@@ -110,20 +107,19 @@ class WindowDataGenerator(keras.utils.Sequence):
             
         return X_batch, y_batch
         
-    def get_all_y(self):
+    def get_all_data(self):
+        X_all = np.empty((len(self.window_indices), self.window_size, len(features)), dtype=np.float32)
         y_all = np.empty(len(self.window_indices), dtype=np.float32)
         for i, w_idx in enumerate(self.window_indices):
             file_idx, start = w_idx
+            X_all[i] = self.X_data[file_idx][start : start + self.window_size]
             y_all[i] = self.y_data[file_idx][start + self.window_size - 1]
-        return y_all
-
-MAX_TRAIN = 500  # You can increase this safely now!
-MAX_VAL = 100
+        return X_all, y_all
 
 # --- Global Scaler ---
 print("[Global] Computing single Normalizer (Mean/Variance) for all 19 features...")
 scaler_data = []
-for file in train_files[:MAX_TRAIN]:
+for file in train_files[:MAX_TRAIN_GS]:
     try:
         df = pd.read_csv(file)
         avail = [c for c in features if c in df.columns]
@@ -135,36 +131,25 @@ if scaler_data:
     stacked = np.vstack(scaler_data)
     global_mean = np.mean(stacked, axis=0)
     global_variance = np.var(stacked, axis=0)
-    
-    scaler_dict = {
-        "mean": {feat: float(global_mean[i]) for i, feat in enumerate(features)},
-        "variance": {feat: float(global_variance[i]) for i, feat in enumerate(features)},
-        "std": {feat: float(np.sqrt(global_variance[i])) for i, feat in enumerate(features)}
-    }
-    with open("scaler_1d_cnn.json", "w") as f:
-        json.dump(scaler_dict, f, indent=4)
 else:
     print("Failed to compute scaler data. Aborting.")
     exit(1)
 
 
-# Build TFLite CNN Architecture
-def get_compiled_model(target_name):
-    # Set target-specific dropout rate based on Grid Search
-    dropout_rate = 0.5 if target_name == "Future_Hypoxia" else 0.3
-    
+def get_compiled_model(learning_rate=0.0005, filters_1=16, filters_2=32, kernel_size=3, dropout_rate=0.5):
     inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))
     
     norm_layer = keras.layers.Normalization(mean=global_mean, variance=global_variance)
     x = norm_layer(inputs)
     
-    x = keras.layers.Conv1D(filters=16, kernel_size=5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+    # Simple CNN, hardware friendly for EFR32
+    x = keras.layers.Conv1D(filters=filters_1, kernel_size=kernel_size, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
     x = keras.layers.MaxPool1D(pool_size=2)(x)
     
-    x = keras.layers.Conv1D(filters=32, kernel_size=5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+    x = keras.layers.Conv1D(filters=filters_2, kernel_size=kernel_size, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
     x = keras.layers.MaxPool1D(pool_size=2)(x)
     
-    x = keras.layers.Conv1D(filters=32, kernel_size=5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+    x = keras.layers.Conv1D(filters=filters_2, kernel_size=kernel_size, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
     
     x = keras.layers.GlobalAveragePooling1D()(x)
     x = keras.layers.Dropout(dropout_rate)(x)
@@ -172,98 +157,120 @@ def get_compiled_model(target_name):
     outputs = keras.layers.Dense(1, activation='sigmoid')(x)
     
     model = keras.Model(inputs=inputs, outputs=outputs)
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=learning_rate), 
                   loss='binary_crossentropy', 
-                  metrics=[keras.metrics.AUC(name='auc'), keras.metrics.AUC(curve='PR', name='pr_auc')])
+                  metrics=[keras.metrics.AUC(name='auc')])
     return model
 
-class EpochEndCallback(keras.callbacks.Callback):
-    def __init__(self, val_gen, target):
-        super().__init__()
-        self.val_gen = val_gen
-        self.target = target
+
+class KerasGridSearchWrapper(BaseEstimator, ClassifierMixin):
+    def __init__(self, learning_rate=0.0005, filters_1=16, filters_2=32, kernel_size=3, dropout_rate=0.5, batch_size=128):
+        self.learning_rate = learning_rate
+        self.filters_1 = filters_1
+        self.filters_2 = filters_2
+        self.kernel_size = kernel_size
+        self.dropout_rate = dropout_rate
+        self.batch_size = batch_size
+        self.model_ = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        self.model_ = get_compiled_model(
+            learning_rate=self.learning_rate, 
+            filters_1=self.filters_1, 
+            filters_2=self.filters_2, 
+            kernel_size=self.kernel_size, 
+            dropout_rate=self.dropout_rate
+        )
+        # Handle class imbalance
+        weights = compute_class_weight('balanced', classes=self.classes_, y=y)
+        class_weights = dict(zip(self.classes_, weights))
         
-    def on_epoch_end(self, epoch, logs=None):
-        y_true = self.val_gen.get_all_y()
-        y_pred_prob = self.model.predict(self.val_gen, verbose=0).flatten()
-        
-        # Dynamically find the best threshold using F1 score
-        from sklearn.metrics import f1_score
-        best_thresh = 0.5
-        best_f1 = 0
-        for thresh in np.arange(0.3, 0.8, 0.05):
-            y_pred = (y_pred_prob > thresh).astype(int)
-            score = f1_score(y_true, y_pred)
-            if score > best_f1:
-                best_f1 = score
-                best_thresh = thresh
-                
-        y_pred_best = (y_pred_prob > best_thresh).astype(int)
-        cm = confusion_matrix(y_true, y_pred_best)
-        print(f"\n--- Epoch {epoch+1} Confusion Matrix (Optimal Threshold: {best_thresh:.2f}) ---")
-        print(cm)
-        
-        checkpoint_name = f"checkpoint_epoch{epoch+1}.tfile"
-        try:
-            converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
-            converter.optimizations = [tf.lite.Optimize.DEFAULT]
-            tflite_model = converter.convert()
-            with open(checkpoint_name, "wb") as f:
-                f.write(tflite_model)
-            print(f"Saved {checkpoint_name}")
-        except Exception as e:
-            print(f"Failed to save {checkpoint_name}: {e}")
+        self.model_.fit(X, y, epochs=EPOCHS_GS, batch_size=self.batch_size, class_weight=class_weights, verbose=0)
+        return self
+
+    def predict(self, X):
+        return (self.model_.predict(X, verbose=0) > 0.5).astype(int).flatten()
+
+    def predict_proba(self, X):
+        probs = self.model_.predict(X, verbose=0)
+        return np.hstack([1 - probs, probs])
+
 
 targets = ["Future_Hypotension", "Future_Hypoxia", "Future_Tachycardia"]
 
+# Grid search parameter space (kept small for demonstration/speed, but tunable)
+param_grid = {
+    'learning_rate': [0.001, 0.0005],
+    'filters_1': [8, 16],
+    'filters_2': [16, 32],
+    'kernel_size': [3, 5],
+    'dropout_rate': [0.3, 0.5],
+    'batch_size': [128, 256]
+}
+
+# We will score using F1 to account for class imbalance where negatives are more than positives
+f1_scorer = make_scorer(f1_score)
+
+print("\n=======================================================")
+print(" STARTING GRID SEARCH FOR ALL TARGETS")
+print("=======================================================\n")
+
+best_params_per_target = {}
+
 for target in targets:
     print("=" * 60)
-    print(f" TRAINING 1D CNN FOR: {target}")
+    print(f" EXTRACTING DATA & RUNNING GRID SEARCH FOR: {target}")
     print("=" * 60)
     
-    train_gen = WindowDataGenerator(train_files[:MAX_TRAIN], target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, shuffle=True)
-    val_gen = WindowDataGenerator(val_files[:MAX_VAL], target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, shuffle=False)
+    # Use a small subset (15 files) with a large stride (stride=10) to generate a manageable dataset for GS
+    gen = WindowDataGenerator(train_files[:MAX_TRAIN_GS], target, features, batch_size=128, window_size=WINDOW_SIZE, stride=STRIDE, shuffle=False)
     
-    if len(train_gen) == 0:
+    if len(gen) == 0:
         print(f"No valid data found for {target}. Skipping...")
         continue
     
-    y_tr_all = train_gen.get_all_y()
-    classes = np.unique(y_tr_all)
-    weights = compute_class_weight('balanced', classes=classes, y=y_tr_all)
-    class_weights = dict(zip(classes, weights))
-    # Give the negative class slightly more weight to reduce False Positives
-    class_weights[0] = class_weights[0] * 1.5
+    X_all, y_all = gen.get_all_data()
+    print(f"Extracted {len(y_all)} windows for Grid Search on {target}.")
     
-    print(f"Adjusted Class Weights applied: {class_weights}")
-    print(f"Train Windows: {len(y_tr_all)} | Val Windows: {len(val_gen.get_all_y())}")
-    
-    model = get_compiled_model(target)
-    early_stop = keras.callbacks.EarlyStopping(monitor='val_pr_auc', mode='max', patience=3, restore_best_weights=True)
-    epoch_end_cb = EpochEndCallback(val_gen, target)
-    
-    model.fit(
-        train_gen,
-        validation_data=val_gen,
-        epochs=EPOCHS,
-        class_weight=class_weights,
-        callbacks=[early_stop, epoch_end_cb],
-        verbose=1
-    )
-    
-    # Export to TFLite
-    print(f"Exporting {target} to TFLite...")
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    tflite_model = converter.convert()
-    
-    tflite_path = f"cnn_{target}.tflite"
-    with open(tflite_path, "wb") as f:
-        f.write(tflite_model)
-    print(f"Successfully saved {tflite_path} ({len(tflite_model) / 1024:.2f} KB)")
-    
-    # Free up memory
-    del train_gen, val_gen, y_tr_all, model
+    # Free generator memory
+    del gen
     gc.collect()
 
-print("All targets processed successfully!")
+    if len(np.unique(y_all)) < 2:
+        print(f"Only 1 class found for {target} in this small subset. Skipping Grid Search...")
+        continue
+
+    # Stratified K-Fold to maintain class distribution in splits
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    
+    model_wrapper = KerasGridSearchWrapper()
+    
+    grid = GridSearchCV(estimator=model_wrapper, 
+                        param_grid=param_grid, 
+                        scoring=f1_scorer, 
+                        cv=cv, 
+                        verbose=2, 
+                        n_jobs=1) # n_jobs=1 because TF doesn't always play nice with multiprocessing
+    
+    print(f"Starting Grid Search CV for {target}...")
+    grid_result = grid.fit(X_all, y_all)
+    
+    print(f"\n--- Best Hyperparameters for {target} ---")
+    print(f"Best Score (F1): {grid_result.best_score_:.4f}")
+    print(f"Best Params: {grid_result.best_params_}\n")
+    
+    best_params_per_target[target] = grid_result.best_params_
+    
+    del X_all, y_all, grid_result, grid
+    gc.collect()
+
+print("=" * 60)
+print(" GRID SEARCH COMPLETE")
+print("=" * 60)
+print("Best Hyperparameters summary:")
+for target, params in best_params_per_target.items():
+    print(f"\n{target}:")
+    for k, v in params.items():
+        print(f"  {k}: {v}")
