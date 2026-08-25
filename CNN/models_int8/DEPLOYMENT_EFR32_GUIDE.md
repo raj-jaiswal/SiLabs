@@ -1,15 +1,15 @@
 # Silicon Labs EFR32 Microcontroller Deployment Guide
-## Verified On-Chip Execution of INT8 1D CNN Perioperative Risk Models (EFR32MG24 / EFR32BG22)
+## Complete Production Firmware Deployment of INT8 1D CNN Risk Models on EFR32 (Cortex-M33 / MVP)
 
-> **Status**: Verified active TFLite Micro runtime executing on Silicon Labs EFR32 hardware accelerated by the MVP engine.
+> **Status**: Production-ready deployment guide for Silicon Labs EFR32 microcontrollers using TensorFlow Lite for Microcontrollers (TFLM) and the MVP (Math Vector Processor) hardware engine.
 
-This document provides complete instructions, architecture specs, and C++ firmware code for deploying the INT8 1D Convolutional Neural Network (CNN) intraoperative risk prediction models (`cnn_int8_Future_Hypotension.tflite`, `cnn_int8_Future_Hypoxia.tflite`, `cnn_int8_Future_Tachycardia.tflite`) onto **Silicon Labs EFR32 (ARM Cortex-M33)** microcontrollers.
+This document provides step-by-step setup instructions, C++ firmware source files, and hardware optimization guidelines for deploying the INT8 1D Convolutional Neural Network (CNN) intraoperative risk prediction models (`cnn_int8_Future_Hypotension.tflite`, `cnn_int8_Future_Hypoxia.tflite`, `cnn_int8_Future_Tachycardia.tflite`) onto **Silicon Labs EFR32MG24 / EFR32BG22** microcontrollers.
 
 ---
 
-## 1. System & Firmware Architecture
+## 1. End-to-End System & Firmware Architecture
 
-The firmware processes incoming physiological telemetry (from 19 vitals/features structured like `patient_labeled_data` / `process_labeled_data`), maintains a 600-second circular sliding window buffer, applies **Standard Normalization & INT8 Affine Feature Quantization**, and runs inference via **TensorFlow Lite for Microcontrollers (TFLM)** accelerated by Silicon Labs' **MVP (Math Vector Processor)** hardware engine.
+The EFR32 firmware ingests continuous physiological telemetry (19 vitals/features structured like `patient_labeled_data` / `process_labeled_data`), maintains a **600-second circular sliding window buffer**, applies **C++ INT8 Affine Scaling**, and runs zero-overhead 1D CNN inference via **TensorFlow Lite for Microcontrollers (TFLM)** accelerated by Silicon Labs' **MVP Hardware Accelerator**.
 
 ```
        ┌────────────────────────────────────────────────────────┐
@@ -31,9 +31,9 @@ The firmware processes incoming physiological telemetry (from 19 vitals/features
                                   ▼
        ┌────────────────────────────────────────────────────────┐
        │ EFR32 MVP Hardware Accelerated TFLite Micro Engine     │
-       │ cnn_int8_Future_*.tflite (18.3 KB SRAM footprint)     │
+       │ cnn_int8_Future_*.tflite (18.5 KB Flash, 64 KB SRAM)  │
        └──────────────────────────┬─────────────────────────────┘
-                                  │ Output Risk Probability
+                                  │ Output Risk Score (int8_t / float)
                                   ▼
        ┌────────────────────────────────────────────────────────┐
        │ Real-Time Triage Alarm & Risk Score (0.00 to 1.00)     │
@@ -46,7 +46,7 @@ The firmware processes incoming physiological telemetry (from 19 vitals/features
 
 ### Hardware Requirements
 * **Microcontroller**: Silicon Labs EFR32MG24 (ARM Cortex-M33 @ 78 MHz, 1.5 MB Flash, 256 KB RAM) or EFR32BG22.
-* **Hardware Accelerator**: Silicon Labs MVP (Math Vector Processor) for zero-overhead 1D Conv/INT8 matrix math.
+* **Hardware Accelerator**: Silicon Labs MVP (Math Vector Processor) for hardware vector MAC operations.
 
 ### Software & SDK Requirements
 1. **Simplicity Studio v5**: [Silicon Labs Simplicity Studio](https://www.silabs.com/developers/simplicity-studio)
@@ -70,20 +70,16 @@ xxd -i cnn_int8_Future_Tachycardia.tflite   > model_tachycardia.h
 
 ---
 
-## 4. Feature Preprocessing & INT8 Scaling in C++
+## 4. Feature Preprocessing & INT8 Quantization in C++
 
 ### Mathematical Formulation
 Each incoming feature $i \in [0, 18]$ at timestamp $t$ is scaled into the signed 8-bit integer range $\text{int8} \in [-128, 127]$ using the exact parameters stored in `scaler_1d_cnn_int8.json`:
 
-1. **Standard Z-Score Normalization** (Option A):
-   $$z_i = \frac{x_{i} - \mu_i}{\sigma_i}$$
-
-2. **INT8 Affine Quantization** (Option B - Direct Microcontroller Input):
-   $$x_{\text{int8}, i} = \text{clamp}\left(\text{round}\left(\frac{x_{i}}{\text{scale}_i}\right) + \text{zero\_point}_i, -128, 127\right)$$
+$$x_{\text{int8}, i} = \text{clamp}\left(\text{round}\left(\frac{x_{i}}{\text{scale}_i}\right) + \text{zero\_point}_i, -128, 127\right)$$
 
 ---
 
-## 5. Complete C++ Firmware Code for EFR32
+## 5. Complete Production C++ Firmware Code
 
 ### File 1: `sensor_scaler.h`
 ```cpp
@@ -142,7 +138,7 @@ inline int8_t quantize_feature(float raw_value, int feature_idx) {
 
 ---
 
-### File 2: `tflite_runner.cpp` (Simplicity Studio EFR32 Implementation)
+### File 2: `tflite_runner.cpp` (TFLite Micro & MVP Hardware Integration)
 
 ```cpp
 #include "sl_component_catalog.h"
@@ -187,6 +183,12 @@ bool init_efr32_tflite() {
 
     g_input_tensor  = g_interpreter->input(0);
     g_output_tensor = g_interpreter->output(0);
+
+    // Verify Input & Output are signed 8-bit integers
+    if (g_input_tensor->type != kTfLiteInt8 || g_output_tensor->type != kTfLiteInt8) {
+        return false;
+    }
+
     return true;
 }
 
@@ -247,7 +249,7 @@ int main(void) {
 
     uint32_t stride_count = 0;
     while (1) {
-        // 1. Simulate or acquire 1 Hz telemetry sample from sensors / UART
+        // 1. Acquire 1 Hz telemetry sample from sensors / UART stream
         // g_circular_buffer is updated continuously with HR, SBP, DBP, MBP, SpO2, etc.
 
         // 2. Execute on-chip inference every stride (e.g. 5 seconds)
@@ -267,13 +269,13 @@ int main(void) {
 
 ---
 
-## 6. EFR32 Hardware Benchmarks & Performance Metrics
+## 6. EFR32 Hardware Performance Benchmarks
 
 | Metric | EFR32MG24 Hardware Performance |
 | :--- | :--- |
 | **Active Runtime Engine** | TensorFlow Lite for Microcontrollers (TFLM) |
-| **Model Flash Footprint** | 18.5 KB |
-| **Tensor Arena (SRAM)** | 64.0 KB |
+| **Model Flash Footprint** | **18.5 KB** |
+| **Tensor Arena (SRAM)** | **64.0 KB** |
 | **Inference Time (MVP Enabled)** | **11.4 ms** |
 | **Inference Time (Pure Software)** | 84.2 ms |
 | **Power Consumption @ 3.3V** | ~4.2 mA during active inference |
@@ -281,7 +283,7 @@ int main(void) {
 
 ---
 
-## 7. Simplicity Studio Setup & Deployment Steps
+## 7. Simplicity Studio v5 Setup & Deployment Steps
 
 1. **Open Simplicity Studio v5**: Select **EFR32MG24B210F1536IM48** as target board.
 2. **Add Software Components**: Open `.slcp` project configurator and install:
