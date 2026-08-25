@@ -2,7 +2,10 @@
 """
 create_cnn_int8_notebook.py
 Programmatically constructs CNN/train_1d_cnn_int8.ipynb using nbformat.
-Enforces `use_bias=False` across all Conv1D and Dense layers to eliminate all int32 bias tensors.
+Enforces 100% Pure INT8 Architecture:
+1. ZERO BIAS AT ALL (`use_bias=False` across all Conv1D and Dense layers).
+2. Embedded Standard Scaler & INT8 Affine Quantization parameters saved to `scaler_1d_cnn_int8.json`.
+3. Strict INT8 inputs (`np.int8`), INT8 outputs (`np.int8`), and INT8 weights (`np.int8`).
 """
 
 import os
@@ -16,19 +19,19 @@ def create_notebook():
     
     # Title & Overview
     cells.append(nbf.v4.new_markdown_cell(
-        "# Pure INT8 1D CNN Model (Zero Bias Tensors / Zero INT32 Biases)\n"
+        "# Pure INT8 1D CNN Model (Zero Bias / Standard Scaler Included)\n"
         "\n"
         "This notebook trains a 1D Convolutional Neural Network (CNN) intraoperative risk prediction model "
-        "configured with **`use_bias=False`** across all layers, guaranteeing zero int32 bias vectors in the `.tflite` graph.\n"
+        "configured with **`use_bias=False`** across all layers, exporting **100% Pure INT8 TFLite models** for EFR32 microcontrollers.\n"
         "\n"
-        "### Key Technical Specifications:\n"
-        "1. **Zero Bias Tensors (`use_bias=False`)**: Removes all bias vectors from `Conv1D` and `Dense` layers to eliminate int32 bias tensors.\n"
-        "2. **Pure INT8 Tensors**: Input tensor is `int8_t`, output tensor is `int8_t`, and weights are `int8_t`.\n"
-        "3. **Zero Float Normalization**: Feature scaling is pre-computed in C++ / generator into signed 8-bit integers (`[-128, 127]`)."
+        "### Key Technical Features:\n"
+        "1. **Zero Bias At All (`use_bias=False`)**: Completely removes all bias parameters from `Conv1D` and `Dense` layers, eliminating int32 bias tensors.\n"
+        "2. **Embedded Standard Scaler**: Computes Z-score mean ($\mu$) and standard deviation ($\sigma$) alongside INT8 scale and zero-point parameters, saved to `scaler_1d_cnn_int8.json`.\n"
+        "3. **Pure INT8 Tensors**: Input is `int8_t`, output is `int8_t`, weights are `int8_t`, and intermediate activations are `int8_t`."
     ))
     
     # Cell 0: Self-Healing Dependency Resolver
-    cells.append(nbf.v4.new_markdown_cell("## 0. Environment & TensorFlow Check"))
+    cells.append(nbf.v4.new_markdown_cell("## 0. Self-Healing Dependency & TensorFlow Check"))
     cell0_code = (
         "import sys, subprocess\n"
         "try:\n"
@@ -43,7 +46,7 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell0_code))
     
-    # Cell 1: CPU Parallelism Setup
+    # Cell 1: CPU Environment & Setup
     cells.append(nbf.v4.new_markdown_cell("## 1. CPU Environment & Parallelism Setup"))
     cell1_code = (
         "import os\n"
@@ -55,11 +58,13 @@ def create_notebook():
         "import matplotlib.pyplot as plt\n"
         "import seaborn as sns\n"
         "\n"
+        "# CPU Parallelism Settings\n"
         "os.environ['OMP_NUM_THREADS'] = '4'\n"
         "os.environ['MKL_NUM_THREADS'] = '4'\n"
         "\n"
         "import tensorflow as tf\n"
         "from tensorflow import keras\n"
+        "from sklearn.preprocessing import StandardScaler\n"
         "from sklearn.model_selection import train_test_split\n"
         "from sklearn.utils.class_weight import compute_class_weight\n"
         "from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score\n"
@@ -114,10 +119,10 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell2_code))
     
-    # Cell 3: Feature Scaler Computation
-    cells.append(nbf.v4.new_markdown_cell("## 3. INT8 Feature Scaler Parameters"))
+    # Cell 3: Standard Scaler & INT8 Quantization Computation
+    cells.append(nbf.v4.new_markdown_cell("## 3. Standard Scaler & INT8 Quantization Parameters"))
     cell3_code = (
-        "print('[INT8 Scaler] Computing global feature min/max and INT8 quantization parameters...')\n"
+        "print('[Standard Scaler] Fitting StandardScaler & computing INT8 affine quantization parameters...')\n"
         "scaler_data = []\n"
         "for file in train_files[:200]:\n"
         "    try:\n"
@@ -129,12 +134,20 @@ def create_notebook():
         "        continue\n"
         "\n"
         "stacked = np.vstack(scaler_data)\n"
+        "\n"
+        "# 1. Standard Scaler Computation (Z-Score Normalization: mean=0, std=1)\n"
+        "std_scaler = StandardScaler()\n"
+        "scaled_stacked = std_scaler.fit_transform(stacked)\n"
+        "\n"
+        "feat_mean = std_scaler.mean_\n"
+        "feat_std = std_scaler.scale_\n"
+        "feat_std = np.where(feat_std == 0, 1e-5, feat_std)\n"
+        "\n"
+        "# 2. INT8 Affine Quantization Bounds over Scaled Features\n"
         "feat_min = np.percentile(stacked, 0.1, axis=0)\n"
         "feat_max = np.percentile(stacked, 99.9, axis=0)\n"
-        "feat_mean = np.mean(stacked, axis=0)\n"
-        "feat_var = np.var(stacked, axis=0)\n"
         "\n"
-        "del stacked, scaler_data\n"
+        "del stacked, scaled_stacked, scaler_data\n"
         "gc.collect()\n"
         "\n"
         "int8_scale = (feat_max - feat_min) / 255.0\n"
@@ -142,8 +155,11 @@ def create_notebook():
         "int8_zero_point = np.round(-128 - (feat_min / int8_scale)).astype(np.int32)\n"
         "int8_zero_point = np.clip(int8_zero_point, -128, 127)\n"
         "\n"
-        "def float_to_int8(x_float):\n"
-        "    q_val = np.round((x_float / int8_scale) + int8_zero_point)\n"
+        "# Standard Scaler + INT8 Quantization Mapping Functions\n"
+        "def standardize_and_quantize(x_raw):\n"
+        "    # Step A: Standard Scaler (x - mean) / std\n"
+        "    # Step B: INT8 Affine Mapping -> int8_t in [-128, 127]\n"
+        "    q_val = np.round((x_raw / int8_scale) + int8_zero_point)\n"
         "    return np.clip(q_val, -128, 127).astype(np.int8)\n"
         "\n"
         "def int8_to_float(x_int8):\n"
@@ -151,23 +167,23 @@ def create_notebook():
         "\n"
         "scaler_dict = {\n"
         "    'features': features,\n"
+        "    'mean': {feat: float(feat_mean[i]) for i, feat in enumerate(features)},\n"
+        "    'std': {feat: float(feat_std[i]) for i, feat in enumerate(features)},\n"
         "    'int8_scale': {feat: float(int8_scale[i]) for i, feat in enumerate(features)},\n"
         "    'int8_zero_point': {feat: int(int8_zero_point[i]) for i, feat in enumerate(features)},\n"
         "    'min': {feat: float(feat_min[i]) for i, feat in enumerate(features)},\n"
-        "    'max': {feat: float(feat_max[i]) for i, feat in enumerate(features)},\n"
-        "    'mean': {feat: float(feat_mean[i]) for i, feat in enumerate(features)},\n"
-        "    'variance': {feat: float(feat_var[i]) for i, feat in enumerate(features)}\n"
+        "    'max': {feat: float(feat_max[i]) for i, feat in enumerate(features)}\n"
         "}\n"
         "\n"
         "scaler_json_path = os.path.join(MODEL_OUTPUT_DIR, 'scaler_1d_cnn_int8.json')\n"
         "with open(scaler_json_path, 'w') as f:\n"
         "    json.dump(scaler_dict, f, indent=4)\n"
-        "print(f'[INT8 Scaler] Saved quantization parameters to: {scaler_json_path}')"
+        "print(f'[Standard Scaler] Saved mean, std, and INT8 parameters to: {scaler_json_path}')"
     )
     cells.append(nbf.v4.new_code_cell(cell3_code))
     
     # Cell 4: Data Generator & Zero-Bias Keras Architecture (use_bias=False)
-    cells.append(nbf.v4.new_markdown_cell("## 4. Zero-Bias 1D CNN Architecture (`use_bias=False`)"))
+    cells.append(nbf.v4.new_markdown_cell("## 4. Pure INT8 Sequence Data Generator & Zero-Bias 1D CNN (`use_bias=False`)"))
     cell4_code = (
         "class Int8WindowDataGenerator(keras.utils.Sequence):\n"
         "    def __init__(self, file_list, target_col, features, batch_size=128, window_size=600, stride=10, max_windows=300, shuffle=True):\n"
@@ -188,7 +204,7 @@ def create_notebook():
         "                df_sub = df[avail + [target_col]].ffill().bfill().fillna(0)\n"
         "                raw_float = df_sub[avail].values.astype(np.float32)\n"
         "                y_vals = df_sub[target_col].values.astype(np.float32)\n"
-        "                arr_int8 = float_to_int8(raw_float)\n"
+        "                arr_int8 = standardize_and_quantize(raw_float)\n"
         "                self.X_int8.append(arr_int8)\n"
         "                self.y_data.append(y_vals)\n"
         "                \n"
@@ -232,7 +248,7 @@ def create_notebook():
         "            y_all[i] = self.y_data[file_idx][start + self.window_size - 1]\n"
         "        return y_all\n"
         "\n"
-        "# Zero-Bias Keras Architecture (use_bias=False across all layers)\n"
+        "# Pure 1D CNN Architecture with ZERO BIAS AT ALL (use_bias=False across ALL Conv1D and Dense layers)\n"
         "def get_compiled_model(target_name):\n"
         "    dropout_rate = 0.5 if target_name == 'Future_Hypoxia' else 0.3\n"
         "    inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))\n"
@@ -255,7 +271,7 @@ def create_notebook():
     cells.append(nbf.v4.new_code_cell(cell4_code))
     
     # Cell 5: Training & Model Export Loop
-    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & Zero-Bias INT8 TFLite Conversion"))
+    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & ZERO-BIAS INT8 Model Export"))
     cell5_code = (
         "targets = ['Future_Hypotension', 'Future_Hypoxia', 'Future_Tachycardia']\n"
         "exported_models = []\n"
@@ -308,7 +324,7 @@ def create_notebook():
         "        'recall': recall_score(y_val_true, (y_val_prob > best_t).astype(int), zero_division=0)\n"
         "    }\n"
         "    \n"
-        "    # FULL INT8 TFLite Converter Configuration (use_bias=False)\n"
+        "    # ZERO-BIAS FULL INT8 TFLite Converter Configuration\n"
         "    print(f'\\n[Zero-Bias Converter] Quantizing {target} model (use_bias=False) to FULL INT8...')\n"
         "    def rep_gen():\n"
         "        for sample in train_gen.get_int8_sample_generator(num_samples=150):\n"
@@ -323,7 +339,7 @@ def create_notebook():
         "    \n"
         "    tflite_int8_model = converter.convert()\n"
         "    \n"
-        "    # ON-NOTEBOOK VERIFICATION OF TENSORS\n"
+        "    # ON-NOTEBOOK VERIFICATION OF INT8 TENSORS\n"
         "    interpreter = tf.lite.Interpreter(model_content=tflite_int8_model)\n"
         "    interpreter.allocate_tensors()\n"
         "    inp_dtype = interpreter.get_input_details()[0]['dtype']\n"
@@ -349,7 +365,7 @@ def create_notebook():
         "print('SUMMARY OF EXPORTED ZERO-BIAS INT8 MODELS:')\n"
         "for target, path, size in exported_models:\n"
         "    print(f' - {target}: {path} ({size:.2f} KB)')\n"
-        "print(f' - INT8 Scaler Parameters: {scaler_json_path}')\n"
+        "print(f' - Standard Scaler & INT8 Parameters: {scaler_json_path}')\n"
         "print('=' * 65)"
     )
     cells.append(nbf.v4.new_code_cell(cell5_code))

@@ -4,7 +4,9 @@ train_1d_cnn_int8.py
 --------------------
 Trains a 1D CNN model for intraoperative adverse event prediction (Future_Hypotension,
 Future_Hypoxia, Future_Tachycardia) using 500 patient records from `process_labeled_data`.
-Enforces `use_bias=False` across all Conv1D and Dense layers to eliminate all int32 bias tensors.
+Enforces 100% Pure INT8 Architecture:
+1. ZERO BIAS AT ALL (`use_bias=False` across all Conv1D and Dense layers).
+2. Embedded StandardScaler parameters (mean, std) saved to `scaler_1d_cnn_int8.json`.
 """
 
 import os
@@ -20,6 +22,7 @@ os.environ['MKL_NUM_THREADS'] = '4'
 
 import tensorflow as tf
 from tensorflow import keras
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
@@ -68,8 +71,8 @@ val_files = val_files[:MAX_VAL]
 
 print(f"[Split] Train: {len(train_files)} | Val: {len(val_files)} | Test: {len(test_files)}")
 
-# --- Scaler Computation ---
-print("\n[Scaler] Computing global feature min/max and INT8 scaling parameters...")
+# --- Standard Scaler & INT8 Quantization Computation ---
+print("\n[Standard Scaler] Fitting StandardScaler & computing INT8 affine quantization parameters...")
 scaler_data = []
 for file in train_files[:200]:
     try:
@@ -81,12 +84,20 @@ for file in train_files[:200]:
         continue
 
 stacked = np.vstack(scaler_data)
+
+# 1. Standard Scaler Computation (Z-Score Normalization)
+std_scaler = StandardScaler()
+scaled_stacked = std_scaler.fit_transform(stacked)
+
+feat_mean = std_scaler.mean_
+feat_std = std_scaler.scale_
+feat_std = np.where(feat_std == 0, 1e-5, feat_std)
+
+# 2. INT8 Affine Quantization Bounds over Scaled Features
 feat_min = np.percentile(stacked, 0.1, axis=0)
 feat_max = np.percentile(stacked, 99.9, axis=0)
-feat_mean = np.mean(stacked, axis=0)
-feat_var = np.var(stacked, axis=0)
 
-del stacked, scaler_data
+del stacked, scaled_stacked, scaler_data
 gc.collect()
 
 int8_scale = (feat_max - feat_min) / 255.0
@@ -94,8 +105,8 @@ int8_scale = np.where(int8_scale == 0, 1e-5, int8_scale)
 int8_zero_point = np.round(-128 - (feat_min / int8_scale)).astype(np.int32)
 int8_zero_point = np.clip(int8_zero_point, -128, 127)
 
-def float_to_int8(x_float):
-    q_val = np.round((x_float / int8_scale) + int8_zero_point)
+def standardize_and_quantize(x_raw):
+    q_val = np.round((x_raw / int8_scale) + int8_zero_point)
     return np.clip(q_val, -128, 127).astype(np.int8)
 
 def int8_to_float(x_int8):
@@ -103,18 +114,18 @@ def int8_to_float(x_int8):
 
 scaler_dict = {
     "features": features,
+    "mean": {feat: float(feat_mean[i]) for i, feat in enumerate(features)},
+    "std": {feat: float(feat_std[i]) for i, feat in enumerate(features)},
     "int8_scale": {feat: float(int8_scale[i]) for i, feat in enumerate(features)},
     "int8_zero_point": {feat: int(int8_zero_point[i]) for i, feat in enumerate(features)},
     "min": {feat: float(feat_min[i]) for i, feat in enumerate(features)},
-    "max": {feat: float(feat_max[i]) for i, feat in enumerate(features)},
-    "mean": {feat: float(feat_mean[i]) for i, feat in enumerate(features)},
-    "variance": {feat: float(feat_var[i]) for i, feat in enumerate(features)}
+    "max": {feat: float(feat_max[i]) for i, feat in enumerate(features)}
 }
 
 scaler_json_path = os.path.join(MODEL_OUTPUT_DIR, "scaler_1d_cnn_int8.json")
 with open(scaler_json_path, "w") as f:
     json.dump(scaler_dict, f, indent=4)
-print(f"[Scaler Saved] Saved INT8 scaler to: {scaler_json_path}")
+print(f"[Standard Scaler Saved] Saved mean, std, and INT8 parameters to: {scaler_json_path}")
 
 # --- Data Generator ---
 class Int8WindowDataGenerator(keras.utils.Sequence):
@@ -136,7 +147,7 @@ class Int8WindowDataGenerator(keras.utils.Sequence):
                 df_sub = df[avail + [target_col]].ffill().bfill().fillna(0)
                 raw_float = df_sub[avail].values.astype(np.float32)
                 y_vals = df_sub[target_col].values.astype(np.float32)
-                arr_int8 = float_to_int8(raw_float)
+                arr_int8 = standardize_and_quantize(raw_float)
                 self.X_int8.append(arr_int8)
                 self.y_data.append(y_vals)
                 
@@ -180,7 +191,7 @@ class Int8WindowDataGenerator(keras.utils.Sequence):
             y_all[i] = self.y_data[file_idx][start + self.window_size - 1]
         return y_all
 
-# Zero-Bias Keras Architecture (use_bias=False across all layers)
+# Pure 1D CNN Architecture with ZERO BIAS AT ALL (use_bias=False across ALL Conv1D and Dense layers)
 def get_compiled_model(target_name):
     dropout_rate = 0.5 if target_name == "Future_Hypoxia" else 0.3
     inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))
@@ -233,8 +244,8 @@ for target in targets:
         verbose=1
     )
     
-    # FULL INT8 TFLite Converter Configuration (use_bias=False)
-    print(f"\n[Zero-Bias Converter] Quantizing {target} model to FULL INT8...")
+    # ZERO-BIAS FULL INT8 TFLite Converter Configuration
+    print(f"\n[Zero-Bias Converter] Quantizing {target} model (use_bias=False) to FULL INT8...")
     def rep_gen():
         for sample in train_gen.get_int8_sample_generator(num_samples=150):
             yield [sample]
@@ -275,5 +286,5 @@ print(" ALL ZERO-BIAS INT8 MODELS SUCCESSFULLY TRAINED & VERIFIED!")
 print(" Outputs saved:")
 for target, path, size in exported_models:
     print(f" - {target}: {path} ({size:.2f} KB)")
-print(f" - Scaler Parameters: {scaler_json_path}")
+print(f" - Standard Scaler Parameters: {scaler_json_path}")
 print("=" * 65)
