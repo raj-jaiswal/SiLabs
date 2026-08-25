@@ -36,7 +36,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
     const valueColor = isAlert ? 'text-error' : 'text-on-surface';
     const barBgColor = isAlert ? 'bg-error-container' : 'bg-surface-container-high';
     const barFillColor = isAlert ? 'bg-error' : isElevated ? 'bg-tertiary-container' : 'bg-primary-container';
-    
+
     return (
       <div className={isP1 && !isAlert ? 'opacity-90' : ''}>
         <p className={`text-label-mono font-label-mono ${labelColor} mb-1 uppercase text-[10px] ${isAlert ? 'font-bold' : ''} flex items-center gap-1`}>
@@ -62,7 +62,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
   };
 
   const getRankStyles = (rank: TriageRank) => {
-    switch(rank) {
+    switch (rank) {
       case 'P1_CRITICAL':
         return {
           cardBorder: 'border-error/30 hover:border-error/60 shadow-[0_4px_12px_rgba(186,26,26,0.05)]',
@@ -100,7 +100,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 pb-margin">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pb-margin">
       {/* Page Header / Context */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
@@ -128,7 +128,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
           const isStale = (profile.isEsp32Live || profile.id === 'PATIENT-000') && profile.isStale;
 
           return (
-            <div key={profile.id} className={`col-span-12 bg-surface-container-lowest rounded-xl border ${styles.cardBorder} overflow-hidden flex flex-col md:flex-row relative group transition-colors`}>
+            <div key={profile.id} className={`col-span-12 bg-surface-container-lowest border ${styles.cardBorder} overflow-hidden flex flex-col md:flex-row relative group transition-colors`}>
               <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${styles.stripe}`}></div>
 
               {/* Patient Identity Profile */}
@@ -140,13 +140,13 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
                     </div>
                   </div>
                 )}
-                
+
                 <div className={`flex items-start justify-between mb-3 ${isStale ? 'opacity-50' : ''}`}>
                   <span className={`${styles.badge} border px-2 py-1 rounded text-label-mono font-label-mono font-bold tracking-widest text-[10px]`}>
                     {styles.badgeText}
                   </span>
                   <span className="text-on-surface-variant text-label-mono font-label-mono">
-                    {profile.isEsp32Live ? 'ESP32 Live' : 'Simulated'}
+                    {profile.isEsp32Live ? 'Edge Node Live' : 'Simulated'}
                   </span>
                 </div>
 
@@ -171,7 +171,7 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
               </div>
 
               {/* Vitals Data Visualizations */}
-              <div className={`p-6 md:w-[55%] grid grid-cols-3 gap-6 items-center ${isStale ? 'opacity-50 grayscale' : ''}`}>
+              <div className={`p-6 md:w-[55%] grid grid-cols-1 sm:grid-cols-3 gap-6 items-center ${isStale ? 'opacity-50 grayscale' : ''}`}>
                 {renderVitalCard(hypotension, 'Hypotension (MAP)', isP1)}
                 {renderVitalCard(hypoxia, 'Hypoxia (SpO2)', isP1)}
                 {renderVitalCard(tachycardia, 'Tachycardia (HR)', isP1)}
@@ -179,7 +179,8 @@ export const TriageTable: React.FC<TriageTableProps> = ({ patients, onSelectPati
 
               {/* Actions */}
               <div className="p-6 md:w-[15%] flex items-center justify-end border-t md:border-t-0 md:border-l border-outline-variant/30 bg-surface-bright">
-                <button 
+                <button
+                  title="View complete clinical profile and high-resolution telemetry"
                   onClick={() => onSelectPatient(patient)}
                   className="w-full md:w-auto bg-surface text-primary border border-outline-variant px-6 py-3 rounded-lg font-label-mono text-label-mono hover:bg-surface-container-high transition-colors shadow-sm whitespace-nowrap"
                 >

@@ -17,8 +17,8 @@ export const CriticalAlertBar: React.FC<CriticalAlertBarProps> = ({
   if (!criticalPatients || criticalPatients.length === 0) return null;
 
   return (
-    <div className="bg-error-container border border-error/20 rounded-xl p-4 mb-margin mx-6 mt-6 flex items-center justify-between shadow-[0_4px_12px_rgba(186,26,26,0.05)] select-none">
-      <div className="flex items-center gap-4">
+    <div className="bg-error-container border border-error/20 rounded-xl p-4 mb-margin mx-4 md:mx-6 mt-4 md:mt-6 flex flex-col md:flex-row items-start md:items-center justify-between shadow-[0_4px_12px_rgba(186,26,26,0.05)] select-none gap-4 md:gap-0">
+      <div className="flex items-start md:items-center gap-4">
         <div className="bg-error text-on-error w-10 h-10 rounded-full flex items-center justify-center animate-pulse shrink-0">
           <span className="material-symbols-outlined font-bold">warning</span>
         </div>
@@ -44,7 +44,7 @@ export const CriticalAlertBar: React.FC<CriticalAlertBarProps> = ({
       </div>
       <button 
         onClick={onDismiss}
-        className="px-4 py-2 bg-error text-on-error rounded-lg font-label-mono text-label-mono hover:bg-on-error-container transition-colors shadow-sm whitespace-nowrap shrink-0"
+        className="w-full md:w-auto px-4 py-2 bg-error text-on-error rounded-lg font-label-mono text-label-mono hover:bg-on-error-container transition-colors shadow-sm whitespace-nowrap shrink-0"
       >
         Acknowledge All
       </button>

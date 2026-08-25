@@ -31,12 +31,12 @@ export const Header: React.FC<HeaderProps> = ({
   const formattedTime = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <header className="bg-surface docked full-width top-0 sticky border-b border-outline-variant flex justify-between items-center w-full px-6 py-4 z-40 select-none">
+    <header className="bg-surface docked full-width top-0 sticky border-b border-outline-variant flex justify-between items-center w-full px-4 md:px-6 py-3 md:py-4 z-40 select-none">
       {/* Brand Logo & Global Search Context */}
-      <div className="flex items-center gap-8">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4 md:gap-8">
+        <div className="flex items-center gap-2 md:gap-3">
           <SiliconLabsLogo size="md" />
-          <h1 className="text-headline-md font-headline-md font-black text-primary tracking-tight">ICU Sentinel</h1>
+          <h1 className="text-headline-sm md:text-headline-md font-headline-md font-black text-primary tracking-tight">ICU Sentinel</h1>
         </div>
       </div>
 
