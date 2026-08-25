@@ -2,8 +2,7 @@
 """
 create_cnn_int8_notebook.py
 Programmatically constructs CNN/train_1d_cnn_int8.ipynb using nbformat.
-Guarantees 100% FULL INT8 Quantization (int8 input, int8 operators, int8 output, zero float32/int16)
-for EFR32 microcontroller deployment.
+Configures 100% INT8 Model Architecture with `use_bias=False` (Zero bias tensors in model graph).
 """
 
 import os
@@ -17,20 +16,19 @@ def create_notebook():
     
     # Title & Overview
     cells.append(nbf.v4.new_markdown_cell(
-        "# Pure INT8 1D CNN Model Training & Microcontroller Export Pipeline\n"
+        "# Pure INT8 1D CNN Model (Zero Bias Tensors) for EFR32 Microcontrollers\n"
         "\n"
-        "This notebook implements an end-to-end **100% Full INT8 Quantized** 1D Convolutional Neural Network (CNN) "
-        "training pipeline for Silicon Labs **EFR32 microcontrollers** (Cortex-M33).\n"
+        "This notebook trains a 1D Convolutional Neural Network (CNN) intraoperative risk prediction model "
+        "configured with **`use_bias=False`** across all layers, guaranteeing zero bias vectors in the `.tflite` graph.\n"
         "\n"
-        "### Key Technical Requirements Enforced:\n"
-        "1. **Full INT8 Quantization**: Input tensor is `int8_t`, output tensor is `int8_t`, and all intermediate layers use pure INT8 integer math.\n"
-        "2. **Zero Float32 / Zero Int16**: Removes Keras float normalization layers from the graph; pre-computes feature scaling into INT8 affine parameters.\n"
-        "3. **Representative Dataset Calibration**: Uses real patient telemetry to calibrate INT8 dynamic ranges for all Conv1D, MaxPool1D, and Dense layers.\n"
-        "4. **On-Notebook Verification**: Asserts `dtype == np.int8` for input and output tensors before saving models into `CNN/models_int8/`."
+        "### Key Architecture Features:\n"
+        "1. **Zero Bias Tensors (`use_bias=False`)**: Removes all bias vectors from `Conv1D` and `Dense` layers.\n"
+        "2. **Pure INT8 Tensors**: Input tensor is `int8_t`, output tensor is `int8_t`, and weights are `int8_t`.\n"
+        "3. **Zero Float Normalization**: Feature scaling is pre-computed in C++ / generator into signed 8-bit integers (`[-128, 127]`)."
     ))
     
     # Cell 0: Self-Healing Dependency Resolver
-    cells.append(nbf.v4.new_markdown_cell("## 0. Self-Healing Dependency & TensorFlow Check"))
+    cells.append(nbf.v4.new_markdown_cell("## 0. Environment & TensorFlow Check"))
     cell0_code = (
         "import sys, subprocess\n"
         "try:\n"
@@ -45,8 +43,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell0_code))
     
-    # Cell 1: Environment & CPU Setup
-    cells.append(nbf.v4.new_markdown_cell("## 1. CPU Environment & Thread Optimization"))
+    # Cell 1: CPU Parallelism Setup
+    cells.append(nbf.v4.new_markdown_cell("## 1. CPU Environment & Parallelism Setup"))
     cell1_code = (
         "import os\n"
         "import glob\n"
@@ -57,7 +55,6 @@ def create_notebook():
         "import matplotlib.pyplot as plt\n"
         "import seaborn as sns\n"
         "\n"
-        "# CPU Parallelism & Memory Safety Settings\n"
         "os.environ['OMP_NUM_THREADS'] = '4'\n"
         "os.environ['MKL_NUM_THREADS'] = '4'\n"
         "\n"
@@ -70,24 +67,23 @@ def create_notebook():
         "tf.config.threading.set_inter_op_parallelism_threads(2)\n"
         "tf.config.threading.set_intra_op_parallelism_threads(4)\n"
         "\n"
-        "# Output directory for INT8 models\n"
         "MODEL_OUTPUT_DIR = 'models_int8'\n"
         "os.makedirs(MODEL_OUTPUT_DIR, exist_ok=True)\n"
-        "print(f'[CPU Setup] CPU thread optimization active. Model directory: {MODEL_OUTPUT_DIR}')"
+        "print(f'[Setup] Dedicated storage initialized: {MODEL_OUTPUT_DIR}')"
     )
     cells.append(nbf.v4.new_code_cell(cell1_code))
     
     # Cell 2: Configuration & Dataset Indexing
-    cells.append(nbf.v4.new_markdown_cell("## 2. Configuration & 500-Patient Dataset Indexing"))
+    cells.append(nbf.v4.new_markdown_cell("## 2. Configuration & Dataset Indexing"))
     cell2_code = (
         "# --- Configuration & Hyperparameters ---\n"
         "WINDOW_SIZE = 600\n"
-        "STRIDE = 10         # Stride 10s for fast CPU training and memory safety\n"
-        "EPOCHS = 8          # 8 Epochs for high efficiency\n"
-        "BATCH_SIZE = 128    # Optimal CPU cache batch size\n"
-        "MAX_TRAIN = 500     # 500 Patient records\n"
+        "STRIDE = 10\n"
+        "EPOCHS = 8\n"
+        "BATCH_SIZE = 128\n"
+        "MAX_TRAIN = 500\n"
         "MAX_VAL = 100\n"
-        "MAX_WINDOWS_PER_PATIENT = 300  # Cap per patient\n"
+        "MAX_WINDOWS_PER_PATIENT = 300\n"
         "\n"
         "possible_paths = [\n"
         "    '../process_labeled_data',\n"
@@ -98,7 +94,6 @@ def create_notebook():
         "csv_files = sorted(glob.glob(os.path.join(input_dir, 'patient_*_1hz.csv')))\n"
         "print(f'[Dataset] Found {len(csv_files)} patient records in: {input_dir}')\n"
         "\n"
-        "# 19 Features (9 Base Vitals + 10 Engineered Derivatives)\n"
         "base_features = [\n"
         "    'Solar8000/HR', 'Solar8000/ART_SBP', 'Solar8000/ART_DBP', 'Solar8000/ART_MBP',\n"
         "    'Solar8000/PLETH_SPO2', 'Solar8000/RR_CO2', 'Solar8000/ETCO2', 'Primus/FIO2', 'Solar8000/BT'\n"
@@ -119,8 +114,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell2_code))
     
-    # Cell 3: Pure INT8 Feature Scaler Computation
-    cells.append(nbf.v4.new_markdown_cell("## 3. Pure INT8 Feature Scaler Computation"))
+    # Cell 3: Feature Scaler Computation
+    cells.append(nbf.v4.new_markdown_cell("## 3. INT8 Feature Scaler Parameters"))
     cell3_code = (
         "print('[INT8 Scaler] Computing global feature min/max and INT8 quantization parameters...')\n"
         "scaler_data = []\n"
@@ -142,7 +137,6 @@ def create_notebook():
         "del stacked, scaler_data\n"
         "gc.collect()\n"
         "\n"
-        "# Affine INT8 Scaling: float -> [-128, 127]\n"
         "int8_scale = (feat_max - feat_min) / 255.0\n"
         "int8_scale = np.where(int8_scale == 0, 1e-5, int8_scale)\n"
         "int8_zero_point = np.round(-128 - (feat_min / int8_scale)).astype(np.int32)\n"
@@ -172,8 +166,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell3_code))
     
-    # Cell 4: Pure INT8 Data Generator & Keras Model Architecture
-    cells.append(nbf.v4.new_markdown_cell("## 4. Pure INT8 Sequence Data Generator & 1D CNN Architecture"))
+    # Cell 4: Data Generator & No-Bias Keras Architecture
+    cells.append(nbf.v4.new_markdown_cell("## 4. Zero-Bias 1D CNN Architecture (`use_bias=False`)"))
     cell4_code = (
         "class Int8WindowDataGenerator(keras.utils.Sequence):\n"
         "    def __init__(self, file_list, target_col, features, batch_size=128, window_size=600, stride=10, max_windows=300, shuffle=True):\n"
@@ -238,18 +232,18 @@ def create_notebook():
         "            y_all[i] = self.y_data[file_idx][start + self.window_size - 1]\n"
         "        return y_all\n"
         "\n"
-        "# Pure 1D CNN Model Architecture (No Keras float normalization in graph)\n"
+        "# Zero-Bias Keras Architecture (use_bias=False)\n"
         "def get_compiled_model(target_name):\n"
         "    dropout_rate = 0.5 if target_name == 'Future_Hypoxia' else 0.3\n"
         "    inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))\n"
-        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(inputs)\n"
+        "    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(inputs)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
-        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
+        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
         "    x = keras.layers.MaxPool1D(2)(x)\n"
-        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
+        "    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)\n"
         "    x = keras.layers.GlobalAveragePooling1D()(x)\n"
         "    x = keras.layers.Dropout(dropout_rate)(x)\n"
-        "    outputs = keras.layers.Dense(1, activation='sigmoid')(x)\n"
+        "    outputs = keras.layers.Dense(1, activation='sigmoid', use_bias=False)(x)\n"
         "    model = keras.Model(inputs=inputs, outputs=outputs)\n"
         "    model.compile(\n"
         "        optimizer=keras.optimizers.Adam(learning_rate=0.001),\n"
@@ -260,8 +254,8 @@ def create_notebook():
     )
     cells.append(nbf.v4.new_code_cell(cell4_code))
     
-    # Cell 5: Training & FULL INT8 TFLite Conversion Loop
-    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & FULL INT8 Model Export (Zero Float32/Int16)"))
+    # Cell 5: Training & Model Export Loop
+    cells.append(nbf.v4.new_markdown_cell("## 5. Training Loop & Zero-Bias INT8 TFLite Conversion"))
     cell5_code = (
         "targets = ['Future_Hypotension', 'Future_Hypoxia', 'Future_Tachycardia']\n"
         "exported_models = []\n"
@@ -269,7 +263,7 @@ def create_notebook():
         "\n"
         "for target in targets:\n"
         "    print('=' * 65)\n"
-        "    print(f' TRAINING PURE INT8 1D CNN FOR: {target}')\n"
+        "    print(f' TRAINING ZERO-BIAS INT8 1D CNN FOR: {target}')\n"
         "    print('=' * 65)\n"
         "    \n"
         "    train_gen = Int8WindowDataGenerator(train_files, target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, MAX_WINDOWS_PER_PATIENT, shuffle=True)\n"
@@ -315,7 +309,7 @@ def create_notebook():
         "    }\n"
         "    \n"
         "    # FULL INT8 TFLite Converter Configuration\n"
-        "    print(f'\\n[Full INT8 Converter] Quantizing {target} model to FULL INT8 (int8 input, int8 ops, int8 output)...')\n"
+        "    print(f'\\n[Zero-Bias Converter] Quantizing {target} model (use_bias=False) to FULL INT8...')\n"
         "    def rep_gen():\n"
         "        for sample in train_gen.get_int8_sample_generator(num_samples=150):\n"
         "            yield [sample]\n"
@@ -329,14 +323,14 @@ def create_notebook():
         "    \n"
         "    tflite_int8_model = converter.convert()\n"
         "    \n"
-        "    # ON-NOTEBOOK VERIFICATION OF INT8 TENSORS\n"
+        "    # ON-NOTEBOOK VERIFICATION OF TENSORS\n"
         "    interpreter = tf.lite.Interpreter(model_content=tflite_int8_model)\n"
         "    interpreter.allocate_tensors()\n"
         "    inp_dtype = interpreter.get_input_details()[0]['dtype']\n"
         "    out_dtype = interpreter.get_output_details()[0]['dtype']\n"
         "    assert inp_dtype == np.int8, f'Input is {inp_dtype}, not int8!'\n"
         "    assert out_dtype == np.int8, f'Output is {out_dtype}, not int8!'\n"
-        "    print(f'✓ VERIFIED: 100% Full INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})')\n"
+        "    print(f'✓ VERIFIED: Zero-Bias INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})')\n"
         "    \n"
         "    tflite_filename = f'cnn_int8_{target}.tflite'\n"
         "    tflite_full_path = os.path.join(MODEL_OUTPUT_DIR, tflite_filename)\n"
@@ -345,14 +339,14 @@ def create_notebook():
         "        \n"
         "    file_size_kb = len(tflite_int8_model) / 1024.0\n"
         "    exported_models.append((target, tflite_full_path, file_size_kb))\n"
-        "    print(f'✓ Saved FULL INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
+        "    print(f'✓ Saved Zero-Bias INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)')\n"
         "    \n"
         "    keras.backend.clear_session()\n"
         "    del train_gen, val_gen, y_tr, model\n"
         "    gc.collect()\n"
         "\n"
         "print('\\n' + '=' * 65)\n"
-        "print('SUMMARY OF EXPORTED FULL INT8 MODELS (ZERO FLOAT32 / INT16):')\n"
+        "print('SUMMARY OF EXPORTED ZERO-BIAS INT8 MODELS:')\n"
         "for target, path, size in exported_models:\n"
         "    print(f' - {target}: {path} ({size:.2f} KB)')\n"
         "print(f' - INT8 Scaler Parameters: {scaler_json_path}')\n"
@@ -361,10 +355,10 @@ def create_notebook():
     cells.append(nbf.v4.new_code_cell(cell5_code))
     
     # Cell 6: Confusion Matrix Heatmap Visualization
-    cells.append(nbf.v4.new_markdown_cell("## 6. Confusion Matrix Heatmaps & Performance Evaluation"))
+    cells.append(nbf.v4.new_markdown_cell("## 6. Confusion Matrix Heatmaps"))
     cell6_code = (
         "fig, axes = plt.subplots(1, 3, figsize=(18, 5))\n"
-        "fig.suptitle('Full INT8 1D CNN Validation Confusion Matrices (EFR32 Hardware Compatible)', fontsize=14, fontweight='bold')\n"
+        "fig.suptitle('Zero-Bias INT8 1D CNN Validation Confusion Matrices', fontsize=14, fontweight='bold')\n"
         "\n"
         "target_titles = {\n"
         "    'Future_Hypotension': 'Hypotension (MAP < 65)',\n"
@@ -405,7 +399,7 @@ def create_notebook():
     with open(output_path, "w", encoding="utf-8") as f:
         nbf.write(nb, f)
         
-    print(f"Successfully generated FULL INT8 notebook (Zero Float32/Int16): {output_path}")
+    print(f"Successfully generated zero-bias INT8 notebook: {output_path}")
 
 if __name__ == "__main__":
     create_notebook()

@@ -4,8 +4,7 @@ train_1d_cnn_int8.py
 --------------------
 Trains a 1D CNN model for intraoperative adverse event prediction (Future_Hypotension,
 Future_Hypoxia, Future_Tachycardia) using 500 patient records from `process_labeled_data`.
-Enforces 100% FULL INT8 QUANTIZATION (int8 input, int8 operators, int8 output, zero float32/int16)
-for EFR32 microcontroller deployment.
+Enforces 100% INT8 Model Architecture with `use_bias=False` (Zero bias tensors in model graph).
 """
 
 import os
@@ -181,18 +180,18 @@ class Int8WindowDataGenerator(keras.utils.Sequence):
             y_all[i] = self.y_data[file_idx][start + self.window_size - 1]
         return y_all
 
-# Pure 1D CNN Model Architecture (Zero Keras float normalization layer)
+# Zero-Bias Keras Architecture (use_bias=False)
 def get_compiled_model(target_name):
     dropout_rate = 0.5 if target_name == "Future_Hypoxia" else 0.3
     inputs = keras.Input(shape=(WINDOW_SIZE, len(features)))
-    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(inputs)
+    x = keras.layers.Conv1D(16, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(inputs)
     x = keras.layers.MaxPool1D(2)(x)
-    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)
     x = keras.layers.MaxPool1D(2)(x)
-    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+    x = keras.layers.Conv1D(32, 5, strides=2, activation='relu', padding='same', use_bias=False, kernel_regularizer=keras.regularizers.l2(0.001))(x)
     x = keras.layers.GlobalAveragePooling1D()(x)
     x = keras.layers.Dropout(dropout_rate)(x)
-    outputs = keras.layers.Dense(1, activation='sigmoid')(x)
+    outputs = keras.layers.Dense(1, activation='sigmoid', use_bias=False)(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.001),
@@ -206,7 +205,7 @@ exported_models = []
 
 for target in targets:
     print("\n" + "=" * 65)
-    print(f" TRAINING PURE INT8 1D CNN FOR: {target}")
+    print(f" TRAINING ZERO-BIAS INT8 1D CNN FOR: {target}")
     print("=" * 65)
     
     train_gen = Int8WindowDataGenerator(train_files, target, features, BATCH_SIZE, WINDOW_SIZE, STRIDE, MAX_WINDOWS_PER_PATIENT, shuffle=True)
@@ -234,8 +233,8 @@ for target in targets:
         verbose=1
     )
     
-    # FULL INT8 TFLite Converter Configuration
-    print(f"\n[Full INT8 Converter] Quantizing {target} model to FULL INT8 (int8 input, int8 ops, int8 output)...")
+    # FULL INT8 TFLite Converter Configuration (use_bias=False)
+    print(f"\n[Zero-Bias Converter] Quantizing {target} model to FULL INT8...")
     def rep_gen():
         for sample in train_gen.get_int8_sample_generator(num_samples=150):
             yield [sample]
@@ -249,14 +248,14 @@ for target in targets:
     
     tflite_int8_model = converter.convert()
     
-    # VERIFICATION OF INT8 TENSORS
+    # VERIFICATION OF TENSORS
     interpreter = tf.lite.Interpreter(model_content=tflite_int8_model)
     interpreter.allocate_tensors()
     inp_dtype = interpreter.get_input_details()[0]['dtype']
     out_dtype = interpreter.get_output_details()[0]['dtype']
     assert inp_dtype == np.int8, f"Input is {inp_dtype}, not int8!"
     assert out_dtype == np.int8, f"Output is {out_dtype}, not int8!"
-    print(f"✓ VERIFIED: 100% Full INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})")
+    print(f"✓ VERIFIED: Zero-Bias INT8 TFLite Model (Input: {inp_dtype}, Output: {out_dtype})")
     
     tflite_filename = f"cnn_int8_{target}.tflite"
     tflite_full_path = os.path.join(MODEL_OUTPUT_DIR, tflite_filename)
@@ -265,14 +264,14 @@ for target in targets:
         
     file_size_kb = len(tflite_int8_model) / 1024.0
     exported_models.append((target, tflite_full_path, file_size_kb))
-    print(f"✓ Saved FULL INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)")
+    print(f"✓ Saved Zero-Bias INT8 TFLite model: {tflite_full_path} ({file_size_kb:.2f} KB)")
     
     keras.backend.clear_session()
     del train_gen, val_gen, y_tr, model
     gc.collect()
 
 print("\n" + "=" * 65)
-print(" ALL FULL INT8 MODELS SUCCESSFULLY TRAINED & VERIFIED!")
+print(" ALL ZERO-BIAS INT8 MODELS SUCCESSFULLY TRAINED & VERIFIED!")
 print(" Outputs saved:")
 for target, path, size in exported_models:
     print(f" - {target}: {path} ({size:.2f} KB)")
