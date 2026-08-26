@@ -95,14 +95,17 @@ export async function GET() {
 
       if (vitalsHistory.length === 0) continue;
 
+      // Advance frame index every 6 seconds (6000 ms step) across CSV history
+      const currentFrameIdx = Math.floor(Date.now() / 6000) % vitalsHistory.length;
+      const currentFrame = vitalsHistory[currentFrameIdx];
       const profile = generateDemographics(patientId);
-      const riskEval = evaluatePatientRisk(vitalsHistory, 0);
+      const riskEval = evaluatePatientRisk(vitalsHistory, currentFrameIdx);
 
       patientStates.push({
         profile,
         vitalsHistory,
-        currentFrameIndex: 0,
-        currentFrame: vitalsHistory[0],
+        currentFrameIndex: currentFrameIdx,
+        currentFrame,
         hypotension: riskEval.hypotension,
         hypoxia: riskEval.hypoxia,
         tachycardia: riskEval.tachycardia,
