@@ -89,8 +89,8 @@ export const UserPortalPage: React.FC<UserPortalPageProps> = ({ targetSlug = 'us
               hypotension: patient.isEsp32Live ? patient.hypotension : riskEval.hypotension,
               hypoxia: patient.isEsp32Live ? patient.hypoxia : riskEval.hypoxia,
               tachycardia: patient.isEsp32Live ? patient.tachycardia : riskEval.tachycardia,
-              triageRank: riskEval.triageRank,
-              activeEventCount: riskEval.activeEventCount,
+              triageRank: patient.isEsp32Live ? patient.triageRank : riskEval.triageRank,
+              activeEventCount: patient.isEsp32Live ? patient.activeEventCount : riskEval.activeEventCount,
             };
           });
           setPatients(updated);
