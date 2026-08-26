@@ -15,9 +15,9 @@ echo "============================================================"
 echo " LAUNCHING BOTH SILABS SERVERS"
 echo "============================================================"
 
-# 1. Start Python Telemetry Server on Port 5000
-echo "[Server 1] Starting Python Telemetry Server on Port 5000..."
-python3 server.py &
+# 1. Start Python Meta Telemetry Server on Port 5000
+echo "[Server 1] Starting Python Meta Telemetry Server (server_1.py) on Port 5000..."
+python3 server_1.py &
 SERVER1_PID=$!
 echo "✓ Python Server started (PID: $SERVER1_PID) at http://localhost:5000/"
 
