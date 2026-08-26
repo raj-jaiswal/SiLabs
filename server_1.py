@@ -348,14 +348,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <div style="height: 140px; position: relative;"><canvas id="chart-${deviceId}"></canvas></div>
                         </div>
                         <div class="card-footer">
-                            <span>Updates: <strong style="color: var(--accent-blue);">${dev.update_count}</strong></span>
-                            <span>Last Seen: <strong>${dev.last_updated}</strong></span>
+                            <span>Updates: <strong class="update-count-val" style="color: var(--accent-blue);">${dev.update_count}</strong></span>
+                            <span>Last Seen: <strong class="last-seen-val">${dev.last_updated}</strong></span>
                         </div>
                     `;
                     grid.appendChild(card);
                 } else {
                     card.querySelector('.meta-risk-section').innerHTML = metaRiskHtml;
                     card.querySelector('.scores-container').innerHTML = scoresHtml;
+                    const updateElem = card.querySelector('.update-count-val');
+                    if (updateElem) updateElem.innerText = dev.update_count;
+                    const lastSeenElem = card.querySelector('.last-seen-val');
+                    if (lastSeenElem) lastSeenElem.innerText = dev.last_updated;
                 }
 
                 updateDeviceChart(deviceId, dev.history || []);
