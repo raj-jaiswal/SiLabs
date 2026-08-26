@@ -198,17 +198,34 @@ export async function GET() {
     const p000RiskEval = evaluatePatientRisk(esp32VitalsHistory, currentP000FrameIdx);
 
     // Override predictions with Stacking Meta Neural Network probabilities (Patient Case ID 427)
-    p000RiskEval.hypotension.probability = Math.round(esp32MetaScores[0] * 100);
-    p000RiskEval.hypotension.active = esp32MetaScores[0] >= 0.5;
-    p000RiskEval.hypotension.status = esp32MetaScores[0] >= 0.5 ? 'ACTIVE_ALERT' : esp32MetaScores[0] >= 0.3 ? 'ELEVATED_RISK' : 'NORMAL';
+    const hypoProbPct = Math.round(esp32MetaScores[0] * 100);
+    const hypoxProbPct = Math.round(esp32MetaScores[1] * 100);
+    const tachyProbPct = Math.round(esp32MetaScores[2] * 100);
 
-    p000RiskEval.hypoxia.probability = Math.round(esp32MetaScores[1] * 100);
-    p000RiskEval.hypoxia.active = esp32MetaScores[1] >= 0.5;
-    p000RiskEval.hypoxia.status = esp32MetaScores[1] >= 0.5 ? 'ACTIVE_ALERT' : esp32MetaScores[1] >= 0.3 ? 'ELEVATED_RISK' : 'NORMAL';
+    p000RiskEval.hypotension.probability = hypoProbPct;
+    p000RiskEval.hypotension.active = hypoProbPct >= 50;
+    p000RiskEval.hypotension.status = hypoProbPct >= 50 ? 'ACTIVE_ALERT' : (hypoProbPct >= 30 ? 'ELEVATED_RISK' : 'NORMAL');
 
-    p000RiskEval.tachycardia.probability = Math.round(esp32MetaScores[2] * 100);
-    p000RiskEval.tachycardia.active = esp32MetaScores[2] >= 0.5;
-    p000RiskEval.tachycardia.status = esp32MetaScores[2] >= 0.5 ? 'ACTIVE_ALERT' : esp32MetaScores[2] >= 0.3 ? 'ELEVATED_RISK' : 'NORMAL';
+    p000RiskEval.hypoxia.probability = hypoxProbPct;
+    p000RiskEval.hypoxia.active = hypoxProbPct >= 50;
+    p000RiskEval.hypoxia.status = hypoxProbPct >= 50 ? 'ACTIVE_ALERT' : (hypoxProbPct >= 30 ? 'ELEVATED_RISK' : 'NORMAL');
+
+    p000RiskEval.tachycardia.probability = tachyProbPct;
+    p000RiskEval.tachycardia.active = tachyProbPct >= 50;
+    p000RiskEval.tachycardia.status = tachyProbPct >= 50 ? 'ACTIVE_ALERT' : (tachyProbPct >= 30 ? 'ELEVATED_RISK' : 'NORMAL');
+
+    // Recalculate priority triage rank strictly based on PREDICTED MODEL RISK PROBABILITIES!
+    const activeCount000 = (hypoProbPct >= 50 ? 1 : 0) + (hypoxProbPct >= 50 ? 1 : 0) + (tachyProbPct >= 50 ? 1 : 0);
+    const elevatedCount000 = (hypoProbPct >= 30 ? 1 : 0) + (hypoxProbPct >= 30 ? 1 : 0) + (tachyProbPct >= 30 ? 1 : 0);
+
+    let p000TriageRank: TriageRank = 'P4_STABLE';
+    if (activeCount000 >= 2) {
+      p000TriageRank = 'P1_CRITICAL';
+    } else if (activeCount000 === 1) {
+      p000TriageRank = 'P2_HIGH';
+    } else if (elevatedCount000 >= 1) {
+      p000TriageRank = 'P3_MODERATE';
+    }
 
     patientStates.push({
       profile: p000Profile,
@@ -218,8 +235,8 @@ export async function GET() {
       hypotension: p000RiskEval.hypotension,
       hypoxia: p000RiskEval.hypoxia,
       tachycardia: p000RiskEval.tachycardia,
-      triageRank: p000RiskEval.triageRank,
-      activeEventCount: (esp32MetaScores[0] >= 0.5 ? 1 : 0) + (esp32MetaScores[1] >= 0.5 ? 1 : 0) + (esp32MetaScores[2] >= 0.5 ? 1 : 0),
+      triageRank: p000TriageRank,
+      activeEventCount: activeCount000,
       isEsp32Live,
       isStale,
       lastUpdateSecAgo,

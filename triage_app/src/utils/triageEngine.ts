@@ -84,9 +84,13 @@ export function evaluatePatientRisk(vitalsHistory: VitalFrame[], currentIndex: n
     unit: 'bpm'
   };
 
-  // 5. Determine Priority Triage Rank
-  const activeEventCount = (isHypotensionActive ? 1 : 0) + (isHypoxiaActive ? 1 : 0) + (isTachyActive ? 1 : 0);
-  const elevatedCount = (hypoProb >= 40.0 ? 1 : 0) + (hypoxProb >= 40.0 ? 1 : 0) + (tachyProb >= 40.0 ? 1 : 0);
+  // 5. Determine Priority Triage Rank strictly based on PREDICTION RISK PROBABILITIES!
+  const isHypoAlert = hypoProb >= 50.0;
+  const isHypoxAlert = hypoxProb >= 50.0;
+  const isTachyAlert = tachyProb >= 50.0;
+
+  const activeEventCount = (isHypoAlert ? 1 : 0) + (isHypoxAlert ? 1 : 0) + (isTachyAlert ? 1 : 0);
+  const elevatedCount = (hypoProb >= 30.0 ? 1 : 0) + (hypoxProb >= 30.0 ? 1 : 0) + (tachyProb >= 30.0 ? 1 : 0);
 
   let triageRank: TriageRank = 'P4_STABLE';
   if (activeEventCount >= 2) {
