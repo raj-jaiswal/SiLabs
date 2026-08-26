@@ -116,10 +116,11 @@ export async function GET() {
     }
 
     // 2. Fetch Live ESP32 Telemetry & Meta-NN Risk Scores for PATIENT-000 (Case ID 427) from server_1.py (port 5000)
-    let esp32Scores: number[] = [0.8850, 0.9420, 0.1200, 0.7500, 0.9800, 0.0500]; // Default 6 base scores
-    let esp32MetaScores: number[] = [0.9937, 0.9760, 0.0000]; // Default 3 Meta-NN probabilities
-    let isStale = false;
-    let lastUpdateSecAgo = 0;
+    let esp32Scores: number[] = [0.8850, 0.9420, 0.1200, 0.7500, 0.9800, 0.0500]; // 6 base scores
+    let esp32MetaScores: number[] = [0.9937, 0.9760, 0.0000]; // 3 Meta-NN probabilities
+    let isStale = true;
+    let isEsp32Live = false;
+    let lastUpdateSecAgo = 999;
 
     try {
       const esp32Res = await fetch('http://localhost:5000/api/devices', { cache: 'no-store', signal: AbortSignal.timeout(1000) });
@@ -132,62 +133,69 @@ export async function GET() {
           const activeDev = deviceList[0];
 
           if (activeDev) {
+            const devEpoch = getDeviceEpoch(activeDev);
+            if (devEpoch > 0) {
+              const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - devEpoch));
+              lastUpdateSecAgo = elapsed;
+              if (elapsed < 15) {
+                isStale = false;
+                isEsp32Live = true;
+              } else {
+                isStale = true;
+                isEsp32Live = false;
+              }
+            } else {
+              isStale = false;
+              isEsp32Live = true;
+            }
+
             if (Array.isArray(activeDev.scores) && activeDev.scores.length > 0) {
               esp32Scores = activeDev.scores;
             }
             if (Array.isArray(activeDev.meta_scores) && activeDev.meta_scores.length >= 3) {
               esp32MetaScores = activeDev.meta_scores;
             }
-            const devEpoch = getDeviceEpoch(activeDev);
-            if (devEpoch > 0) {
-              const elapsed = Math.max(0, Math.floor((Date.now() / 1000) - devEpoch));
-              lastUpdateSecAgo = elapsed;
-              if (elapsed >= 20) {
-                isStale = true;
-              }
-            } else {
-              isStale = false;
-            }
-          } else {
-            isStale = true;
           }
-        } else {
-          isStale = true;
         }
-      } else {
-        isStale = true;
       }
     } catch (e) {
       isStale = true;
+      isEsp32Live = false;
     }
 
-    // Build PATIENT-000 Vitals History (50 frames matching 10 offline patients)
+    // Build PATIENT-000 Vitals History with dynamic 6-second frame progression
     const esp32VitalsHistory: VitalFrame[] = [];
-    const baseMbP = esp32MetaScores[0] > 0.5 ? 60.0 : 75.0; // Hypotension correlation
-    const baseSpO2 = esp32MetaScores[1] > 0.5 ? 88.0 : 98.0; // Hypoxia correlation
-    const baseHR = esp32MetaScores[2] > 0.5 ? 110.0 : 72.0;  // Tachycardia correlation
-
     for (let f = 0; f < 500; f++) {
+      const stepHr = 72.0 + (f % 7) * 0.8;
+      const stepSbp = 118.0 + (f % 9) * 1.2;
+      const stepDbp = 76.0 + (f % 5) * 0.8;
+      const stepMbp = (stepSbp + 2 * stepDbp) / 3.0;
+      const stepSpO2 = 97.0 + (f % 3) * 1.0;
+
       esp32VitalsHistory.push({
         timestampSec: f * 5,
-        hr: baseHR + (f % 3) * 0.5,
-        sbp: baseMbP + 40,
-        dbp: baseMbP - 10,
-        mbp: baseMbP,
-        spo2: baseSpO2,
-        etco2: 35.0,
+        hr: parseFloat(stepHr.toFixed(1)),
+        sbp: parseFloat(stepSbp.toFixed(1)),
+        dbp: parseFloat(stepDbp.toFixed(1)),
+        mbp: parseFloat(stepMbp.toFixed(1)),
+        spo2: Math.min(100, parseFloat(stepSpO2.toFixed(1))),
+        etco2: 35.0 + (f % 3) * 0.5,
         fio2: 30.0,
         bodyTemp: 36.8,
-        pulsePressure: 50.0,
-        shockIndex: baseHR / (baseMbP + 40),
+        pulsePressure: parseFloat((stepSbp - stepDbp).toFixed(1)),
+        shockIndex: parseFloat((stepHr / stepSbp).toFixed(2)),
       });
     }
 
+    const currentP000FrameIdx = Math.floor(Date.now() / 6000) % esp32VitalsHistory.length;
+    const currentP000Frame = esp32VitalsHistory[currentP000FrameIdx];
+
     const p000Profile = generateDemographics('PATIENT-000');
+    p000Profile.isEsp32Live = isEsp32Live;
     p000Profile.isStale = isStale;
     p000Profile.lastUpdateSecAgo = lastUpdateSecAgo;
 
-    const p000RiskEval = evaluatePatientRisk(esp32VitalsHistory, 0);
+    const p000RiskEval = evaluatePatientRisk(esp32VitalsHistory, currentP000FrameIdx);
 
     // Override predictions with Stacking Meta Neural Network probabilities (Patient Case ID 427)
     p000RiskEval.hypotension.probability = Math.round(esp32MetaScores[0] * 100);
@@ -205,14 +213,14 @@ export async function GET() {
     patientStates.push({
       profile: p000Profile,
       vitalsHistory: esp32VitalsHistory,
-      currentFrameIndex: 0,
-      currentFrame: esp32VitalsHistory[0],
+      currentFrameIndex: currentP000FrameIdx,
+      currentFrame: currentP000Frame,
       hypotension: p000RiskEval.hypotension,
       hypoxia: p000RiskEval.hypoxia,
       tachycardia: p000RiskEval.tachycardia,
       triageRank: p000RiskEval.triageRank,
       activeEventCount: (esp32MetaScores[0] >= 0.5 ? 1 : 0) + (esp32MetaScores[1] >= 0.5 ? 1 : 0) + (esp32MetaScores[2] >= 0.5 ? 1 : 0),
-      isEsp32Live: true,
+      isEsp32Live,
       isStale,
       lastUpdateSecAgo,
     });
